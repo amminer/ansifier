@@ -7,6 +7,7 @@
 #   the earlier version.
 # transparency for nonRGB images turns white, should turn black (Image.convert)
 # TODO
+# Re-write with classes, then tackle old bugs if they still exist:
 # choose ascii char based on brightness?
 # output array is way way longer than it should be, but it works so?????
 # could effectively increase output "pixel" density by 2x as many column
@@ -17,24 +18,27 @@ from sys import argv, exit
 from os import get_terminal_size
 
 
-def getChar(maxBrightness, brightness):
-    chars = ["'", '"', "*", "!", "?", "%", "#"]
-    interval = maxBrightness / len(chars)
-    for charIndex in range(0, )
-
-class outputChar:
+# def getChar(maxBrightness, brightness):
+# chars = ["'", '"', "*", "!", "?", "%", "#"]
+# interval = maxBrightness / len(chars)
+# for charIndex in range(0, ...)
+class outputChar:  # Not yet in use
     def __init__(self) -> None:
         self.char = None
         self.r = -1
         self.g = -1
         self.b = -1
+        # TODO ?
 
-class output:
+
+class output:  # Not yet in use
     def __init__(self) -> None:
         self.chars = []
-        
-    def read(filepath=argv[1]):
 
+    def read(filepath=None):
+        if filepath == None:
+            filepath = argv[1]
+        # TODO
 
 
 def main():
