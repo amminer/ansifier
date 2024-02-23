@@ -11,6 +11,7 @@
  Re-write with classes?
  could effectively increase output "pixel" density by 2x as many column
    samples as row samples?
+ needs some kind of tests... oh boy
 """
 
 
