@@ -1,17 +1,14 @@
 """
  Known bugs (have been tweaking, unsure if still present as of right now):
- at large terminal sizes (very zoomed out) image takes on diamond-shaped
+ * at large terminal sizes (very zoomed out) image takes on diamond-shaped
    rgb artifacting?
- at extreme terminal aspect ratios similar artifacting occurs as the image is
+ * at extreme terminal aspect ratios similar artifacting occurs as the image is
    very slightly stretched along the long axis of the terminal window...
- lame and obfuscated behind PIL as these bugs are, this is kinda better than
-   the earlier version.
- transparency for nonRGB images turns white, should turn black (Image.convert)
  TODO
- Re-write with classes?
- could effectively increase output "pixel" density by 2x as many column
-   samples as row samples?
- needs some kind of tests... oh boy
+ * Re-write with a class or two?
+ * Would be cool, but maybe scale poorly, to do context-aware unicode blockchars
+   ie have a left-half-block if pixel to left is opaque but right isn't
+ * needs some kind of tests... oh boy
 """
 
 
