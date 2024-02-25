@@ -127,6 +127,13 @@ def main(img_path, max_height=None, max_width=None, char_by_brightness=False):
 
     for c in output:
         print(c, end="")
+    if args.save_to_file is not None:
+        if DEBUG:
+            print(f'Writing output to {args.save_to_file}')
+        with open(args.save_to_file, 'w') as wf:
+            for c in output:
+                wf.write(c)
+
     if DEBUG:
         print(f'Finished processing {img_path}')
     exit(0)
@@ -197,6 +204,11 @@ if __name__ == "__main__":
         'image to desired output dimensions. Defaults to "lz", Lanczos, which '
         'tends to work best when scaling images down to normal terminal '
         f'dimensions. Options are: {printable_resize_options}')
+
+    argparser.add_argument('-f', '--save-to-file', action='store', type=str,
+        required=False, default=None, help='Write output to a file. '
+        'Does not suppress terminal output. Will create or overwrite the file '
+        'if needed, but will not create new directories.')
 
     argparser.add_argument('-b', '--char-by-brightness', action='store_true',
         required=False, default=False, help='Use brightness (instead of '
