@@ -32,14 +32,13 @@ def resize_image_to_fit(im, max_height, max_width):
     :param max_width: int, maximum number of character-pixels, horizontal
     :return: PIL.Image, scaled down to max size that fits provided dimensions
     """
-    resize_method = Image.LANCZOS
     new_height, new_width = max_height, max_width
     problem_dim = max(new_width, new_height)
-    im.thumbnail((problem_dim, problem_dim), resize_method)
+    im.thumbnail((problem_dim, problem_dim), RESIZE_METHOD)
 
     while im.size[0] > max_width or im.size[1] > max_height:  # img sz > terminal
         problem_dim = max(new_width, new_height)
-        im.thumbnail((problem_dim, problem_dim), resize_method)
+        im.thumbnail((problem_dim, problem_dim), RESIZE_METHOD)
         new_height -= 1
         new_width -= 1
 
@@ -131,14 +130,40 @@ if __name__ == "__main__":
     interpret args,
     call main
     """
+    #UNICODE_ONLY
+    CHARS = ['\u2588', '\u2593', '\u2592', '\u2591', '@', '#', '$', '+', '-', ' ']
+    NUM_CHARS = len(CHARS)
+    resize_options = {
+        'lz': Image.LANCZOS,
+        'l': Image.LINEAR,
+        'bl': Image.BILINEAR,
+        'c': Image.CUBIC,
+        'bc': Image.BICUBIC,
+        'n': Image.NEAREST,
+        'x': Image.BOX,
+        'h': Image.HAMMING
+
+    }
+    printable_resize_options = {
+        'lz': 'Lanczos',
+        'l': 'linear',
+        'bl': 'bilinear interpolation',
+        'c': 'cubic',
+        'bc': 'bicubic interpolation',
+        'n': 'nearest neighbor',
+        'x': 'box',
+        'h': 'Hamming'
+    }
     cell_warning = 'note that a cell is roughly square, i.e. it is '\
         '2 terminal characters wide and 1 terminal character tall.'
 
-    argparser = argparse.ArgumentParser()
-
-    argparser.add_argument('-d', '--debug', action='store_true',
-        required=False, default=False,
-        help='reduce output dims, print helpful info')
+    argparser = argparse.ArgumentParser(
+        description='In its most basic usage, takes an image file as input and '
+        'prints a unicode representation of the image to the terminal, using '
+        'ansi escapes for color and determining what character to use based '
+        'on the transparency of the region of the image represented by that '
+        'character. By default, the image is scaled to the maximum dimensions '
+        'that will fit within the terminal calling this program.')
 
     # TODO handle bad indiv. values and combinations of these
     argparser.add_argument('-H', '--max-height', action='store', type=int,
@@ -149,25 +174,34 @@ if __name__ == "__main__":
         required=False, default=None,
         help='Restrict output to this many columns at most; ' + cell_warning)
 
+    argparser.add_argument('-c', '--char-offset', action='store', type=int,
+        required=False, default=0, help='remove <arg> chars from high (opaque) '
+        f'output options; Available chars are: {CHARS}')
+
+    argparser.add_argument('-C', '--negative-char-offset', action='store', type=int,
+        required=False, default=0, help='remove <arg> chars from low '
+        f'(transparent) output options; preserves space char. '
+        'Available chars are: {CHARS}')
+
+    argparser.add_argument('-r', '--resize-method', action='store', type=str,
+        required=False, default='lz', help='algorithm used for resampling image to '
+        'desired output dimensions. Defaults to "lz", Lanczos, which tends to '
+        'work best when scaling images down to normal terminal dimensions. '
+        f'Options are: {printable_resize_options}')
+
     argparser.add_argument('-b', '--char-by-brightness', action='store_true',
         required=False, default=False, help='Use brightness (instead of '
         'alpha) to determine character used to represent an input region in output.')
 
-    argparser.add_argument('-c', '--char-offset', action='store', type=int,
-        required=False, default=0, help='remove <arg> chars from high output options; '
-        f'sometimes block chars are ugly so you may want to use -c 4, for example. '
-        'Available chars are: {CHARS}')
-
-    argparser.add_argument('-C', '--negative-char-offset', action='store', type=int,
-        required=False, default=0, help='remove <arg> chars from low output options; '
-        f'sometimes block chars are ugly so you may want to use -c 4, for example. '
-        'Available chars are: {CHARS}')
-
     argparser.add_argument('-i', '--invert', action='store_true',
         required=False, default=False,
-        help='when using -b (--char-by-brightness), invert the effect of '
-            'brightness on char selection; useful for images with dark '
-            'foregrounds and bright backgrounds.')
+        help='Invert the effect of transparency (or brightness when using -b '
+            '(--char-by-brightness) on char selection; useful for images with dark '
+            'foregrounds and bright backgrounds, for example')
+
+    argparser.add_argument('-d', '--debug', action='store_true',
+        required=False, default=False,
+        help='reduce output dims, print helpful info')
 
     # TODO not a bad idea but surprisingly not working?
     #argparser.add_argument('-w', '--no-whitespace', action='store_true',
@@ -178,10 +212,14 @@ if __name__ == "__main__":
     argparser.add_argument('imageFilePath')
     args = argparser.parse_args()
 
-    #UNICODE_ONLY
-    CHARS = ['\u2588', '\u2593', '\u2592', '\u2591', '@', '#', '$', '+', '-', ' ']
-    NUM_CHARS = len(CHARS)
     DEBUG = args.debug
+    RESIZE_METHOD = None
+    try:
+        RESIZE_METHOD = resize_options[args.resize_method]
+    except KeyError:
+        print('error: bad value passed to resize_method switch; '
+            'see `{__file__} -h`.')
+        exit(1)
     offset = args.char_offset
     negative_offset = args.negative_char_offset
 
