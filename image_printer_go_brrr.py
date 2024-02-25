@@ -5,10 +5,13 @@
  * at extreme terminal aspect ratios similar artifacting occurs as the image is
    very slightly stretched along the long axis of the terminal window...
  TODO
+ * This would be really cool if it could be consumed/reused by other programs
+   that produce a terminal interface of some kind e.x. curses, whatever -
+   it should provide an interface for its options other than command-line args.
  * Re-write with a class or two?
  * Would be cool, but maybe scale poorly, to do context-aware unicode blockchars
    ie have a left-half-block if pixel to left is opaque but right isn't
- * so, so many more good possibilities for command line args...
+ * Probably still more cool arguments/switches I haven't thought up
  * needs some kind of tests... oh boy
 """
 
@@ -17,13 +20,6 @@ import argparse
 from PIL import Image
 from sys import exit
 from os import get_terminal_size
-
-
-# TODO... classes?
-CHARS = ['\u2588', '\u2593', '\u2592', '\u2591', '#', '@', '$', '+', '-', ' ']  #UNICODE_ONLY
-NUM_CHARS = len(CHARS)
-INTERVALS = [255/len(CHARS)*i for i in range(len(CHARS)-1, -1, -1)]
-DEBUG=False
 
 
 def resize_image_to_fit(im, max_height, max_width):
@@ -182,6 +178,7 @@ if __name__ == "__main__":
     argparser.add_argument('imageFilePath')
     args = argparser.parse_args()
 
+    #UNICODE_ONLY
     CHARS = ['\u2588', '\u2593', '\u2592', '\u2591', '@', '#', '$', '+', '-', ' ']
     NUM_CHARS = len(CHARS)
     DEBUG = args.debug
