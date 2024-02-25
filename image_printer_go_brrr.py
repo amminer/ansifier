@@ -155,27 +155,51 @@ if __name__ == "__main__":
 
     argparser.add_argument('-b', '--char-by-brightness', action='store_true',
         required=False, default=False, help='Use brightness (instead of '
-        'alpha) to determine character used to represent an input region in output')
+        'alpha) to determine character used to represent an input region in output.')
 
     argparser.add_argument('-c', '--char-offset', action='store', type=int,
-        required=False, default=0, help='remove <arg> chars from output options; '
+        required=False, default=0, help='remove <arg> chars from high output options; '
         f'sometimes block chars are ugly so you may want to use -c 4, for example. '
         'Available chars are: {CHARS}')
+
+    argparser.add_argument('-C', '--negative-char-offset', action='store', type=int,
+        required=False, default=0, help='remove <arg> chars from low output options; '
+        f'sometimes block chars are ugly so you may want to use -c 4, for example. '
+        'Available chars are: {CHARS}')
+
+    argparser.add_argument('-i', '--invert', action='store_true',
+        required=False, default=False,
+        help='when using -b (--char-by-brightness), invert the effect of '
+            'brightness on char selection; useful for images with dark '
+            'foregrounds and bright backgrounds.')
+
+    # TODO not a bad idea but surprisingly not working?
+    #argparser.add_argument('-w', '--no-whitespace', action='store_true',
+        #required=False, default=False,
+        #help='if this flag is set, disallow whitespace (completely transparent blocks) '
+            #'in output.')
 
     argparser.add_argument('imageFilePath')
     args = argparser.parse_args()
 
+    CHARS = ['\u2588', '\u2593', '\u2592', '\u2591', '@', '#', '$', '+', '-', ' ']
+    NUM_CHARS = len(CHARS)
     DEBUG = args.debug
     offset = args.char_offset
+    negative_offset = args.negative_char_offset
 
-
-    CHARS = ['\u2588', '\u2593', '\u2592', '\u2591', '#', '@', '$', '+', '-', ' ']
-    NUM_CHARS = len(CHARS)
-    if offset >= NUM_CHARS - 1:
-        print(f'error: character offset argument must be < {NUM_CHARS-1} to get any '
-            f'visible output; see `{__file__} -h`.')
+    if offset + negative_offset >= NUM_CHARS - 1:
+        print(f'error: total character offset argument must be < {NUM_CHARS-1} '
+            f'to get any visible output; see `{__file__} -h`.')
         exit(1)
     CHARS = CHARS[offset:]
+    if negative_offset != 0:
+        CHARS = CHARS[:-1*negative_offset - 1]
+        CHARS.append(' ')
+    if args.invert:
+        CHARS = CHARS[-1::-1]
+    #if args.no_whitespace:
+        #CHARS.remove(' ')
     INTERVALS = [255/len(CHARS)*i for i in range(len(CHARS)-1, -1, -1)]
     if DEBUG:
         print(f'working with these chars: {CHARS}')
