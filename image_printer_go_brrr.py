@@ -36,7 +36,7 @@ def resize_image_to_fit(im, max_height, max_width):
     problem_dim = max(new_width, new_height)
     im.thumbnail((problem_dim, problem_dim), RESIZE_METHOD)
 
-    while im.size[0] > max_width or im.size[1] > max_height:  # img sz > terminal
+    while im.size[0] > max_width or im.size[1] > max_height:  # img > terminal
         problem_dim = max(new_width, new_height)
         im.thumbnail((problem_dim, problem_dim), RESIZE_METHOD)
         new_height -= 1
@@ -64,8 +64,10 @@ def get_char_from_brightness(r, g, b):
     """
     Takes in a rgb values and maps their total brightness to a character.
     Sometimes this is cuter than using alpha (in small outputs for example)
-    :param a: int, min 0, max 255, alpha value of a pixel
-    :return: character fitting alpha value
+    :param r: int, red value, max. 255
+    :param g: int, green value, max. 255
+    :param b: int, blue value, max. 255
+    :return: character fitting brightness value
     """
     brightness = r + g + b  # max. 765
     for i, interval in enumerate(INTERVALS):
@@ -80,14 +82,19 @@ def main(img_path, max_height=None, max_width=None, char_by_brightness=False):
     generate output,
     print output to terminal
     :param img_path: str, path to image file
-    :param dims: tuple of ints || None, maximum number of output cells.
+    :param max_height: int, maximum number of output rows. 1 row == 1 char.
         None defaults to terminal size.
+    :param max_width: int, maximum number of output columns. 1 col == 2 chars.
+        None defaults to terminal size.
+    :param char_by_brightness: bool, whether to use pixel brightness to
+        determine what character is used in the output to represent a given
+        input region. Defaults to False; uses transparency instead.
     """
     if DEBUG:
         print(f'Begin processing {img_path}')
     # assume a terminal character is about twice as tall as it is wide
     if max_height == None:
-        max_height = get_terminal_size().lines - 1  # -1 accounts for prompt line
+        max_height = get_terminal_size().lines - 1  # -1 accounts for prompt
     if max_width == None:
         max_width = get_terminal_size().columns // 2
     im = Image.open(img_path).convert("RGBA")  # TODO error handling af
@@ -113,12 +120,13 @@ def main(img_path, max_height=None, max_width=None, char_by_brightness=False):
             else:
                 char = get_char_from_alpha(a)
 
-            output += f"\033[38;2;{r};{g};{b}m{char}" * 2 + "\033[38;2;255;255;255m"
+            output += f"\033[38;2;{r};{g};{b}m{char}" * 2\
+                + "\033[38;2;255;255;255m"
+
         output += "\n"  # line break at end of each row
 
     for c in output:
         print(c, end="")
-
     if DEBUG:
         print(f'Finished processing {img_path}')
     exit(0)
@@ -131,7 +139,8 @@ if __name__ == "__main__":
     call main
     """
     #UNICODE_ONLY
-    CHARS = ['\u2588', '\u2593', '\u2592', '\u2591', '@', '#', '$', '+', '-', ' ']
+    CHARS = ['\u2588', '\u2593', '\u2592', '\u2591',
+        '@', '#', '$', '+', '-', ' ']
     NUM_CHARS = len(CHARS)
     resize_options = {
         'lz': Image.LANCZOS,
@@ -178,26 +187,27 @@ if __name__ == "__main__":
         required=False, default=0, help='remove <arg> chars from high (opaque) '
         f'output options; Available chars are: {CHARS}')
 
-    argparser.add_argument('-C', '--negative-char-offset', action='store', type=int,
-        required=False, default=0, help='remove <arg> chars from low '
-        f'(transparent) output options; preserves space char. '
+    argparser.add_argument('-C', '--negative-char-offset', action='store',
+            type=int, required=False, default=0, help='remove <arg> chars '
+        f'from low (transparent) output options; preserves space char. '
         'Available chars are: {CHARS}')
 
     argparser.add_argument('-r', '--resize-method', action='store', type=str,
-        required=False, default='lz', help='algorithm used for resampling image to '
-        'desired output dimensions. Defaults to "lz", Lanczos, which tends to '
-        'work best when scaling images down to normal terminal dimensions. '
-        f'Options are: {printable_resize_options}')
+        required=False, default='lz', help='algorithm used for resampling '
+        'image to desired output dimensions. Defaults to "lz", Lanczos, which '
+        'tends to work best when scaling images down to normal terminal '
+        f'dimensions. Options are: {printable_resize_options}')
 
     argparser.add_argument('-b', '--char-by-brightness', action='store_true',
         required=False, default=False, help='Use brightness (instead of '
-        'alpha) to determine character used to represent an input region in output.')
+        'alpha) to determine character used to represent an input region in '
+        'output.')
 
     argparser.add_argument('-i', '--invert', action='store_true',
         required=False, default=False,
         help='Invert the effect of transparency (or brightness when using -b '
-            '(--char-by-brightness) on char selection; useful for images with dark '
-            'foregrounds and bright backgrounds, for example')
+            '(--char-by-brightness) on char selection; useful for images with '
+            'dark foregrounds and bright backgrounds, for example')
 
     argparser.add_argument('-d', '--debug', action='store_true',
         required=False, default=False,
@@ -206,8 +216,8 @@ if __name__ == "__main__":
     # TODO not a bad idea but surprisingly not working?
     #argparser.add_argument('-w', '--no-whitespace', action='store_true',
         #required=False, default=False,
-        #help='if this flag is set, disallow whitespace (completely transparent blocks) '
-            #'in output.')
+        #help='if this flag is set, disallow whitespace '
+            #'(completely transparent blocks) in output.')
 
     argparser.add_argument('imageFilePath')
     args = argparser.parse_args()
@@ -238,5 +248,6 @@ if __name__ == "__main__":
     INTERVALS = [255/len(CHARS)*i for i in range(len(CHARS)-1, -1, -1)]
     if DEBUG:
         print(f'working with these chars: {CHARS}')
-    main(args.imageFilePath, args.max_height, args.max_width, args.char_by_brightness)
+    main(args.imageFilePath, args.max_height, args.max_width,
+        args.char_by_brightness)
 
