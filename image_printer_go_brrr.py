@@ -73,6 +73,7 @@ def get_char_from_brightness(r, g, b):
     for i, interval in enumerate(INTERVALS):
         if brightness >= interval*3:
             return CHARS[i]
+    return CHARS[-1]  # unsure of whether this is a good idea... may mask issues
     return '🚩'  #UNICODE_ONLY
 
 
@@ -149,26 +150,15 @@ if __name__ == "__main__":
     CHARS = ['\u2588', '\u2593', '\u2592', '\u2591',
         '@', '#', '$', '+', '-', ' ']
     NUM_CHARS = len(CHARS)
-    resize_options = {
-        'lz': Image.LANCZOS,
-        'l': Image.LINEAR,
-        'bl': Image.BILINEAR,
-        'c': Image.CUBIC,
-        'bc': Image.BICUBIC,
-        'n': Image.NEAREST,
-        'x': Image.BOX,
-        'h': Image.HAMMING
-
-    }
-    printable_resize_options = {
-        'lz': 'Lanczos',
-        'l': 'linear',
-        'bl': 'bilinear interpolation',
-        'c': 'cubic',
-        'bc': 'bicubic interpolation',
-        'n': 'nearest neighbor',
-        'x': 'box',
-        'h': 'Hamming'
+    resize_options = {  # input param: (PIL param, readable name)
+        'lz': (Image.LANCZOS, 'Lanczos'),
+        'l': (Image.LINEAR, 'linear'),
+        'bl': (Image.BILINEAR, 'bilinear interpolation'),
+        'c': (Image.CUBIC, 'cubic'),
+        'bc': (Image.BICUBIC, 'bicubic interpolation'),
+        'n': (Image.NEAREST, 'nearest neighbor'),
+        'x': (Image.BOX, 'box'),
+        'h': (Image.HAMMING, 'Hamming')
     }
     cell_warning = 'note that a cell is roughly square, i.e. it is '\
         '2 terminal characters wide and 1 terminal character tall.'
@@ -190,30 +180,39 @@ if __name__ == "__main__":
         required=False, default=None,
         help='Restrict output to this many columns at most; ' + cell_warning)
 
-    argparser.add_argument('-c', '--char-offset', action='store', type=int,
+    argparser.add_argument('-c', '--limit-high-chars', action='store', type=int,
         required=False, default=0, help='remove <arg> chars from high (opaque) '
         f'output options; Available chars are: {CHARS}')
 
-    argparser.add_argument('-C', '--negative-char-offset', action='store',
+    argparser.add_argument('-C', '--limit-low-chars', action='store',
             type=int, required=False, default=0, help='remove <arg> chars '
-        f'from low (transparent) output options; preserves space char. '
-        'Available chars are: {CHARS}')
+                f'from low (transparent) output options; preserves space char. '
+                'Available chars are: {CHARS}')
 
+    # TODO this is also a fun idea, but tricky in combination with other options
+    #argparser.add_argument('-o', '--char-offset', action='store',
+            #type=int, required=False, default=0, help='shift <arg> chars '
+                #'higher in the array of available chars, without dropping the '
+                #'space char (retains fully transparent cells). This is a WIP '
+                #'and bad values are likely to break the program. '
+                #f'Available chars are: {CHARS}')
+
+    readable_resize_options = {(k, v[1]) for k, v in resize_options.items()}
     argparser.add_argument('-r', '--resize-method', action='store', type=str,
         required=False, default='lz', help='algorithm used for resampling '
-        'image to desired output dimensions. Defaults to "lz", Lanczos, which '
-        'tends to work best when scaling images down to normal terminal '
-        f'dimensions. Options are: {printable_resize_options}')
+            'image to desired output dimensions. Defaults to "lz", Lanczos, which '
+            'tends to work best when scaling images down to normal terminal '
+            f'dimensions. Options are: {readable_resize_options}')
 
     argparser.add_argument('-f', '--save-to-file', action='store', type=str,
         required=False, default=None, help='Write output to a file. '
-        'Does not suppress terminal output. Will create or overwrite the file '
-        'if needed, but will not create new directories.')
+            'Does not suppress terminal output. Will create or overwrite the file '
+            'if needed, but will not create new directories.')
 
     argparser.add_argument('-b', '--char-by-brightness', action='store_true',
         required=False, default=False, help='Use brightness (instead of '
-        'alpha) to determine character used to represent an input region in '
-        'output.')
+            'alpha) to determine character used to represent an input region in '
+            'output.')
 
     argparser.add_argument('-i', '--invert', action='store_true',
         required=False, default=False,
@@ -237,29 +236,39 @@ if __name__ == "__main__":
     DEBUG = args.debug
     RESIZE_METHOD = None
     try:
-        RESIZE_METHOD = resize_options[args.resize_method]
+        RESIZE_METHOD = resize_options[args.resize_method][0]
     except KeyError:
         print('error: bad value passed to resize_method switch; '
             'see `{__file__} -h`.')
         exit(1)
-    offset = args.char_offset
-    negative_offset = args.negative_char_offset
+    limit = args.limit_high_chars
+    negative_limit = args.limit_low_chars
+    #offset = args.char_offset
 
-    if offset + negative_offset >= NUM_CHARS - 1:
-        print(f'error: total character offset argument must be < {NUM_CHARS-1} '
+    if limit + negative_limit >= NUM_CHARS - 1:
+        print(f'error: total of character limit arguments must be < {NUM_CHARS-1} '
             f'to get any visible output; see `{__file__} -h`.')
         exit(1)
-    CHARS = CHARS[offset:]
-    if negative_offset != 0:
-        CHARS = CHARS[:-1*negative_offset - 1]
+    CHARS = CHARS[limit:]
+    if negative_limit != 0:
+        CHARS = CHARS[:-1*negative_limit - 1]
         CHARS.append(' ')
     if args.invert:
         CHARS = CHARS[-1::-1]
     #if args.no_whitespace:
         #CHARS.remove(' ')
     INTERVALS = [255/len(CHARS)*i for i in range(len(CHARS)-1, -1, -1)]
+    #if offset != 0:
+        #INTERVALS = [i+INTERVALS[-1 - offset] for i in INTERVALS]
+        #new_offset_addition = INTERVALS[-1*offset]
+        #for i, interval in enumerate(INTERVALS):
+            #print(f'offset of {offset} adds {new_offset_addition} to {interval}')
+            #new_interval = interval+new_offset_addition
+            #if new_interval <= 255:
+                #INTERVALS[i] = new_interval
     if DEBUG:
-        print(f'working with these chars: {CHARS}')
+        print(f'working with these chars: {CHARS} (len {len(CHARS)})')
+        print(f'working with these intervals: {INTERVALS} (len {len(INTERVALS)})')
     main(args.imageFilePath, args.max_height, args.max_width,
         args.char_by_brightness)
 
