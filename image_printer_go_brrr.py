@@ -152,9 +152,7 @@ if __name__ == "__main__":
     NUM_CHARS = len(CHARS)
     resize_options = {  # input param: (PIL param, readable name)
         'lz': (Image.LANCZOS, 'Lanczos'),
-        'l': (Image.LINEAR, 'linear'),
         'bl': (Image.BILINEAR, 'bilinear interpolation'),
-        'c': (Image.CUBIC, 'cubic'),
         'bc': (Image.BICUBIC, 'bicubic interpolation'),
         'n': (Image.NEAREST, 'nearest neighbor'),
         'x': (Image.BOX, 'box'),
