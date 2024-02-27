@@ -64,7 +64,5 @@ Some examples of its utility:
 
 * Make neofetch less ugly (especially on Linux Mint):
 
-  ```
-  TODO
-  ```
+  ![output of neofetch patched with the output from this program](readme-images/meofetch.png)
 
