@@ -19,6 +19,8 @@ Some examples of its utility:
 
 * Easily generate cute graphic images for notes you're taking:
 
+  ![program being used to generate a haxor guy](readme-images/haxor.png)
+
   ```
   ...
   metasploit of course:
