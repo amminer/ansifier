@@ -17,6 +17,7 @@
 
 
 import argparse
+import pillow_avif
 from PIL import Image
 from sys import exit
 from os import get_terminal_size
