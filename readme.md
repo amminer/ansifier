@@ -4,7 +4,7 @@ I wrote a scrappy little version of this program relatively early in my
 foray into programming. I find it really fun and useful and have occasionally improved it over the years.
 
 I hope to eventually evolve it into something that could be consumed
-by other code and used in the context of something with a console UI
+by other code and used in the context of something with a terminal UI
 (curses, perhaps?). This might already be out there, I wouldn't know since
 I don't know any curses - this is just a passion project!
 
