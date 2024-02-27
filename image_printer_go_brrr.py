@@ -11,7 +11,8 @@
  * Re-write with a class or two?
  * Would be cool, but maybe scale poorly, to do context-aware unicode blockchars
    ie have a left-half-block if pixel to left is opaque but right isn't
- * Probably still more cool arguments/switches I haven't thought up
+ * Probably still more cool arguments/switches I haven't thought up... and some I have:
+    - Add an option to output html/css instead of ansi escaped text file
  * needs some kind of tests... oh boy
 """
 
