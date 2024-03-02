@@ -18,10 +18,13 @@
 
 
 import argparse
-import pillow_avif
+import pillow_avif  # not ref'd in code, but pillow uses this to support avif
 from PIL import Image
 from sys import exit
-from os import get_terminal_size
+from os import path, get_terminal_size
+from time import sleep
+#from PIL import GifImagePlugin
+#GifImagePlugin.LOADING_STRATEGY = GifImagePlugin.LoadingStrategy.RGB_ALWAYS
 
 
 def resize_image_to_fit(im, max_height, max_width):
@@ -39,6 +42,8 @@ def resize_image_to_fit(im, max_height, max_width):
     im.thumbnail((problem_dim, problem_dim), RESIZE_METHOD)
 
     while im.size[0] > max_width or im.size[1] > max_height:  # img > terminal
+        if DEBUG:
+            print(f'input image scaled to {im.size}')
         problem_dim = max(new_width, new_height)
         im.thumbnail((problem_dim, problem_dim), RESIZE_METHOD)
         new_height -= 1
@@ -79,7 +84,46 @@ def get_char_from_brightness(r, g, b):
     return '🚩'  #UNICODE_ONLY
 
 
-def main(img_path, max_height=None, max_width=None, char_by_brightness=False):
+def image_to_ascii(im):
+    output = []
+    for j in range(im.size[1]):
+        for i in range(im.size[0]):
+            pix = im.getpixel((i, j))
+            r = pix[0]
+            g = pix[1]
+            b = pix[2]
+            a = pix[3]
+            if CHAR_BY_BRIGHTNESS:
+                char = get_char_from_brightness(r, g, b)
+                if a < 20:  # prevent weird artifacting from resize...
+                    char = ' '
+            else:
+                char = get_char_from_alpha(a)
+
+            output += f"\033[38;2;{r};{g};{b}m{char}" * 2\
+                + "\033[38;2;255;255;255m"
+        output += "\n"  # line break at end of each row
+    return output
+
+
+def print_animated(im, delay):
+    frames = []
+    for frame_index in range(im.n_frames):
+        im.seek(frame_index)
+        print(f'appending {im}')
+        frames.append(im)
+    ascii_frames = [image_to_ascii(frame) for frame in frames]
+    for a_frame in ascii_frames:
+        print(a_frame)
+        sleep(delay / 100000.0)
+
+
+def print_image(output):
+    for c in output:
+        print(c, end="")
+
+
+def main(img_path, max_height=None, max_width=None):
     """
     get terminal dimensions,
     generate output,
@@ -89,18 +133,17 @@ def main(img_path, max_height=None, max_width=None, char_by_brightness=False):
         None defaults to terminal size.
     :param max_width: int, maximum number of output columns. 1 col == 2 chars.
         None defaults to terminal size.
-    :param char_by_brightness: bool, whether to use pixel brightness to
-        determine what character is used in the output to represent a given
-        input region. Defaults to False; uses transparency instead.
     """
     if DEBUG:
         print(f'Begin processing {img_path}')
     # assume a terminal character is about twice as tall as it is wide
-    if max_height == None:
+    if max_height is None:
         max_height = get_terminal_size().lines - 1  # -1 accounts for prompt
-    if max_width == None:
+    if max_width is None:
         max_width = get_terminal_size().columns // 2
-    im = Image.open(img_path).convert("RGBA")  # TODO error handling af
+    im = Image.open(img_path)  # TODO error handling af
+    if ANIMATE <= 0 and not CHAR_BY_BRIGHTNESS:
+        im = im.convert('RGBA')
     if DEBUG:
         print(f'Original dims h:{im.height}, w:{im.width}\n'
               f'Maximum dims h:{max_height}, w:{max_width}')
@@ -108,38 +151,126 @@ def main(img_path, max_height=None, max_width=None, char_by_brightness=False):
     if DEBUG:
         print(f'Resized dims h:{im.height}, w:{im.width}')
 
-    output = []
-    for j in range(im.size[1]):
-        for i in range(im.size[0]):  # one iteration for each char in output
-            pix = im.getpixel((i, j))
-            r = pix[0]
-            g = pix[1]
-            b = pix[2]
-            a = pix[3]
-            if char_by_brightness:
-                char = get_char_from_brightness(r, g, b)
-                if a < 20:  # prevent weird artifacting from resize...
-                    char = ' '
-            else:
-                char = get_char_from_alpha(a)
+    if ANIMATE == 0:
+        output = image_to_ascii(im)
+        print_image(output)
+        if args.save_to_file is not None:
+            if DEBUG:
+                print(f'Writing output to {args.save_to_file}')
+            with open(args.save_to_file, 'w') as wf:
+                for c in output:
+                    wf.write(c)
+    # TODO handle fake gifs?
+    elif args.save_to_file is None and img_path.endswith('.gif'):
+        print_animated(im, ANIMATE)
+    else:
+        print(f'Incompatible settings: '
+            '--save-to-file and --animate; see {__file__} -h.')
+        exit(1)
 
-            output += f"\033[38;2;{r};{g};{b}m{char}" * 2\
-                + "\033[38;2;255;255;255m"
-
-        output += "\n"  # line break at end of each row
-
-    for c in output:
-        print(c, end="")
-    if args.save_to_file is not None:
-        if DEBUG:
-            print(f'Writing output to {args.save_to_file}')
-        with open(args.save_to_file, 'w') as wf:
-            for c in output:
-                wf.write(c)
 
     if DEBUG:
         print(f'Finished processing {img_path}')
     exit(0)
+
+
+class ImageFilePrinter():
+
+    def __init__(self, image_path, max_height=None, max_width=None, resize_method=Image.LANCZOS,
+            char_by_brightness=False, save_to_file=None, animate=False, debug=False):
+        self.image_path = image_path
+        self.max_height = max_height
+        self.max_width = max_width
+        self.resize_method = resize_method
+        self.char_by_brightness = char_by_brightness
+        self.save_to_file = save_to_file
+        self.animate = animate
+        self.debug = debug
+        self.image_object = None
+        if not path.exists(self.image_path):
+            print(f'unable to find file {image_path}')
+            exit(1)
+        else:
+            if self.debug and self.max_height is None or self.max_width is None:
+                print('Getting terminal dimensions')
+            if self.max_height is None:
+                self.max_height = get_terminal_size().lines - 1  # -1 accounts for prompt
+            if self.max_width is None:
+                self.max_width = get_terminal_size().columns // 2
+            # assume a terminal character is about twice as tall as it is wide
+            self.image_object = Image.open(image_path)  # TODO error handling af
+
+
+    def print_image(self):
+        if self.animate:
+            self.print_animated()
+        else:
+            self.dump_image_to_stdout()
+
+
+    def dump_image_to_stdout(self, image=None):
+        if image is None:
+            image = self.image_object
+        image = image.convert('RGBA')
+        if self.debug:
+            print(f'before: {image.size}')
+        image.thumbnail((self.max_width, self.max_height),
+                self.resize_method)
+        if self.debug:
+            print(f'target: {(self.max_width, self.max_height)}')
+            print(f'after: {image.size}')
+        if self.debug:
+            print(f'dumping {image} to stdout')
+            #return
+        for c in self.image_to_ascii_array(image):
+            print(c, end="")
+
+
+    def print_animated(self):
+        im = self.image_object
+        frames = []
+
+        while True:
+            if self.debug:
+                print()
+                print(f'Processing frame {im.tell()}')
+            self.dump_image_to_stdout(im)
+            sleep(self.animate / 1000.0)
+            try:
+                im.seek(im.tell() + 1)
+            except EOFError:
+                if self.debug:
+                    print(f'No more frames in image')
+                if args.loop_infinitely:
+                    im.seek(0)
+                else:
+                    break
+
+
+    def image_to_ascii_array(self, image=None):
+        if image is None:
+            image = self.image_object
+        if self.debug:
+            print(f'converting {image} to ascii array')
+        ret = []
+        for j in range(image.size[1]):
+            for i in range(image.size[0]):
+                pix = image.getpixel((i, j))
+                r = pix[0]
+                g = pix[1]
+                b = pix[2]
+                a = pix[3]
+                if CHAR_BY_BRIGHTNESS:
+                    char = get_char_from_brightness(r, g, b)
+                    if a < 20:  # prevent weird artifacting from resize...
+                        char = ' '
+                else:
+                    char = get_char_from_alpha(a)
+
+                ret += f"\033[38;2;{r};{g};{b}m{char}" * 2\
+                    + "\033[38;2;255;255;255m"  # TODO limit resets?
+            ret += "\n"  # line break at end of each row
+        return ret
 
 
 if __name__ == "__main__":
@@ -204,10 +335,21 @@ if __name__ == "__main__":
             'tends to work best when scaling images down to normal terminal '
             f'dimensions. Options are: {readable_resize_options}')
 
+    argparser.add_argument('-a', '--animate', action='store',
+        required=False, type=int, default=0,
+        help='If the input image is animated (.gif), process all keyframes and '
+            'print them wiht ANIMATE milliseconds of delay between frames. '
+            'This option is incompatible with -f.')
+
     argparser.add_argument('-f', '--save-to-file', action='store', type=str,
         required=False, default=None, help='Write output to a file. '
             'Does not suppress terminal output. Will create or overwrite the file '
             'if needed, but will not create new directories.')
+
+    argparser.add_argument('-L', '--loop-infinitely', action='store_true',
+        required=False, default=False,
+        help='With -a --animage, causes the animation to loop until the program '
+            'is terminated.')
 
     argparser.add_argument('-b', '--char-by-brightness', action='store_true',
         required=False, default=False, help='Use brightness (instead of '
@@ -230,11 +372,13 @@ if __name__ == "__main__":
         #help='if this flag is set, disallow whitespace '
             #'(completely transparent blocks) in output.')
 
-    argparser.add_argument('imageFilePath')
+    argparser.add_argument('image_path')
     args = argparser.parse_args()
 
     DEBUG = args.debug
     RESIZE_METHOD = None
+    CHAR_BY_BRIGHTNESS = args.char_by_brightness
+    ANIMATE = args.animate
     try:
         RESIZE_METHOD = resize_options[args.resize_method][0]
     except KeyError:
@@ -269,6 +413,9 @@ if __name__ == "__main__":
     if DEBUG:
         print(f'working with these chars: {CHARS} (len {len(CHARS)})')
         print(f'working with these intervals: {INTERVALS} (len {len(INTERVALS)})')
-    main(args.imageFilePath, args.max_height, args.max_width,
-        args.char_by_brightness)
+    #main(args.imageFilePath, args.max_height, args.max_width)
+    resize_method = resize_options[args.resize_method][0]
+    image_printer = ImageFilePrinter(args.image_path, args.max_height, args.max_width,
+        resize_method, args.char_by_brightness, args.save_to_file, args.animate, args.debug)
+    image_printer.print_image()
 
