@@ -3,7 +3,8 @@
  TODO
  * (re)document stuff - functional version had docstrings that I just kinda dropped
     when I wrote the classes
- * Code is now reusable (except see below point), but significant refactoring is warranted
+ * break this out into multiple files to allow for easier incremental commits
+ * Code is now reusable (sorta, see next point), but significant refactoring is warranted
  * eliminate use of debug arg!!
  * Would be cool, but maybe scale poorly, to do context-aware unicode blockchars
    ie have a left-half-block if pixel to left is opaque but right isn't
@@ -24,14 +25,41 @@ from os import path, get_terminal_size
 from time import sleep
 
 
+# Import this or define your own when you instantiate Cell or ImageFilePrinter
 CHARS = ['\u2588', '\u2593', '\u2592', '\u2591',
-         '@', '#', '$', '+', '-', ' ']
+        '@', '#', '$', '\u2022', '+', ':', '-', ' ']
 
 
 class Cell():
+    """
+    The intended public interface for this class is:
+    * instantiation with at least a tuple of (r, g, b, a) integers,
+      each integer being between 0 and 255 inclusive.
+      Cell((r,g,b,a)) -> <Cell object>
+    * After instantiation, conversion to str is the main point of this class:
+      str(cell) -> "@@" (but with an ansi escape for color)
+    * inheritance, I guess??
 
-    def __init__(self, pixel, from_brightness=False,
-                 chars=None):
+    One block of output, 2 characters wide and 1 tall, representing one pixel
+    in the input image (after any scaling).
+    Character is determined by either alpha (transparency, default)
+    or by brightness (total of RGB values).
+    Currently, each character is composed of
+        a foreground color escape,
+        the character itself,
+        and a reset escape
+    """
+
+    def __init__(self, pixel, from_brightness=False, chars=None):
+        """
+        :param pixel: tuple, of integers, length 4
+            (red, green, blue, alpha) levels between 0 and 255 inclusive.
+        :param from_brightness: bool, whether to use brightness to determine
+            output glyph (defaults to False, which will use alpha)
+        :param chars: list of 1-length strings, any non-zero length
+            characters that will be selected from, intended to be ordered 
+            from least to most visible when printed to a terminal
+        """
         if chars is None:
             self.chars = CHARS
         else:
@@ -40,7 +68,7 @@ class Cell():
                           for i in range(len(self.chars)-1, -1, -1)]
         self.pixel = pixel
         self.from_brightness = from_brightness
-        self.char = self.get_char()
+        self.char = self._get_char()
         r = self.pixel[0]
         g = self.pixel[1]
         b = self.pixel[2]
@@ -49,24 +77,23 @@ class Cell():
 
 
     def __str__(self):
+        # 2x printable character, assume term chars ~2x as tall as wide
         ret = str(self.color_escape + self.char) * 2\
             + self.reset_escape  # TODO limit resets?
         return ret
 
 
-    def get_char(self):
+    def _get_char(self):
         if self.from_brightness:
-            return self.get_char_from_brightness()
+            return self._get_char_from_brightness()
         else:
-            return self.get_char_from_alpha()
+            return self._get_char_from_alpha()
 
 
-    def get_char_from_brightness(self):
+    def _get_char_from_brightness(self):
+        # TODO RGB check?
         char = None
-        r = self.pixel[0]
-        g = self.pixel[1]
-        b = self.pixel[2]
-        brightness = r + g + b  # max. 765
+        brightness = self.pixel[0] + self.pixel[1] + self.pixel[2]  # max. 765
         for i, interval in enumerate(self.intervals):
             if brightness >= interval*3:
                 char = self.chars[i]
@@ -78,8 +105,8 @@ class Cell():
         return char
 
 
-    def get_char_from_alpha(self):
-        #TODO rgba check
+    def _get_char_from_alpha(self):
+        # TODO rgba check?
         char = None
         a = self.pixel[3]
         for i, interval in enumerate(self.intervals):
@@ -96,10 +123,54 @@ class Cell():
 
 
 class ImageFilePrinter():
+    """
+    The intended public interface for this class is
+    * Instantiation with at least an image path, the image to turn into text
+      ImageFilePrinter('/path/to/image.png') -> <ImageFilePrinter>
+    * After instantiation, calling ImageFilePrinter.save_text(path) will
+      dump output to a file at path, assuming all parent directories exist
+      and the file is writable/in a writable location... TODO error handling
+    * After instantiation, calling ImageFilePrinter.print_text() will
+      dump output to stdout.
+
+    a couple of important pieces of state:
+    * self.image_object is an artifact of when I was implementing animated
+      gif support and should really be refactored out, TODO
+    * self.image_to_dump holds the PIL.Image after RGBA conversion and resizing.
+      This gets re-used for each frame when handling animated gifs;
+      unsure of whether this will be a curse or a blessing when I go to
+      implement dumping/loading animated gif frames to/from files.
+      This should only be built once per image or once per frame for animations.
+    * self.output holds the string to dump to stdout or file.
+      It should only be built once, when either print_text or save_text
+      are called. Subsequent calls to these functions reuse the built output.
+    """
 
     def __init__(self, image_path, max_height=None, max_width=None,
             resize_method=Image.LANCZOS, char_by_brightness=False, 
-            chars=CHARS, save_to_file=None, animate=False):
+            chars=CHARS, animate=0):
+        """
+        :param image_path: str, path to image to represent as text.
+            supported image formats are those supported by PIL version 9
+            as well as .avif.
+        :param max_height: int, restrict output text to this number of rows
+            defaults to calling terminal size (might break stuff? TODO).
+        :param max_width: int, restrict output text to this number of columns
+            defaults to calling terminal size (might break stuff? TODO).
+        :param resize_method: PIL.Image.<ResamplingMethod>, see PIL version 9.
+        :param char_by_brightness: bool, whether to use brightness to determine
+            output glyphs (defaults to False, which will use alpha)
+        :param chars: list of 1-length strings, any non-zero length
+            characters that will be selected from, intended to be ordered 
+            from least to most visible when printed to a terminal
+        :param animate: int, truthiness determines whether to read keyframes
+            from animated .gif image inputs and print each keyframe. If truthy,
+            the int value is interpreted as the number of milliseconds to sleep
+            between dumping each frame to stdout, not accounting for the time
+            it takes to perform the output i.e. actual delay between frames
+            may be longer depending on output dimensions, hardware, terminal
+            emulator, etc.
+        """
         self.chars = chars
         self.intervals = [255/len(CHARS)*i for i in range(len(CHARS)-1, -1, -1)]
         self.image_path = image_path
@@ -107,9 +178,10 @@ class ImageFilePrinter():
         self.max_width = max_width
         self.resize_method = resize_method
         self.char_by_brightness = char_by_brightness
-        self.save_to_file = save_to_file
         self.animate = animate
         self.image_object = None
+        self.image_to_dump = None
+        self.output = None
         if not path.exists(self.image_path):
             print(f'unable to find file {image_path}')
             exit(1)
@@ -127,28 +199,52 @@ class ImageFilePrinter():
             self.image_object = Image.open(image_path)  # TODO error handling af
 
 
-    def print_ascii(self):
+    def print_text(self):
         if self.animate:
-            self.print_animated()
+            self._print_animated()
         else:
-            image = self.prepare_for_dump(self.image_object)
+            if self.image_to_dump is None:
+                self.image_to_dump = self.prepare_for_dump(self.image_object)
             if args.debug:
-                print(f'dumping {image} to stdout')
-            self.print_array(self.image_to_ascii_array(image))
+                print(f'dumping {self.image_to_dump} to stdout')
+            self._dump_output_to_stdout(self._image_to_text_array(self.image_to_dump))
 
 
-    def print_array(self, ascii_array):
+    def save_text(self, filepath):
+        if self.animate:
+            #self.save_animated()  # TODO dump and load gif frames!
+            print(f'ERROR, saving animated GIF frames to file not yet implemented')
+        else:
+            if self.image_to_dump is None:
+                self.image_to_dump = self.prepare_for_dump(self.image_object)
+            if self.output is None:
+                self._generate_output_str(self._image_to_text_array(self.image_to_dump))
+            if args.debug:
+                print(f'dumping {self.image_to_dump} to {filepath}')
+            self._save_file(filepath)
+
+    def _save_file(self, filepath):
+        with open(filepath, 'w') as wf:
+            for c in self.output:
+                wf.write(c)
+
+    def _generate_output_str(self, text_array):
         output = ''
-        for c in ascii_array:
+        for c in text_array:
             output += c
-        print(output)
+        self.output = output
+
+    def _dump_output_to_stdout(self, text_array):
+        if self.animate or self.output is None:
+            self._generate_output_str(text_array)
+        print(self.output)
 
 
     def prepare_for_dump(self, image):
         image = image.convert('RGBA')
         if args.debug:
             print(f'before: {image.size}')
-        image.thumbnail((self.max_width, self.max_height),
+        image.thumbnail((self.max_height, self.max_width),
                 self.resize_method)
         if args.debug:
             print(f'target: {(self.max_width, self.max_height)}')
@@ -156,7 +252,7 @@ class ImageFilePrinter():
         return image
 
 
-    def print_animated(self):
+    def _print_animated(self):
         image = self.image_object
         frames = []
         print(f'Processing frames from {self.image_path}...')
@@ -165,7 +261,7 @@ class ImageFilePrinter():
                 print()
                 print(f'Processing frame {image.tell()}')
             frame = self.prepare_for_dump(image)
-            frames.append(self.image_to_ascii_array(frame))
+            frames.append(self._image_to_text_array(frame))
             try:
                 image.seek(image.tell() + 1)
             except EOFError:
@@ -177,17 +273,18 @@ class ImageFilePrinter():
             for frame in frames:
                 if args.debug:
                     print(f'dumping {image} to stdout')
-                self.print_array(frame)
+                self._dump_output_to_stdout(frame)
                 sleep(self.animate / 1000.0)
                 if not args.loop_infinitely:
                     done = True
 
 
-    def image_to_ascii_array(self, image=None):
+    def _image_to_text_array(self, image=None):
+        #TODO This might be unnecessary - why not just go straight to string?
         if image is None:
             image = self.image_object
         if args.debug:
-            print(f'converting {image} to ascii array')
+            print(f'converting {image} to text array')
         ret = []
         for j in range(image.size[1]):
             for i in range(image.size[0]):
@@ -335,9 +432,17 @@ if __name__ == "__main__":
     #main(args.imageFilePath, args.max_height, args.max_width)
     resize_method = resize_options[args.resize_method][0]
 
-    image_printer = ImageFilePrinter(args.image_path,
-        args.max_height, args.max_width, resize_method,
-        args.char_by_brightness, CHARS,
-        args.save_to_file, args.animate)
-    image_printer.print_ascii()
+    image_printer = ImageFilePrinter(
+        args.image_path,
+        args.max_height,
+        args.max_width,
+        resize_method,
+        args.char_by_brightness,
+        CHARS,
+        args.animate)
+
+    image_printer.print_text()
+
+    if args.save_to_file:
+        image_printer.save_text(args.save_to_file)
 
