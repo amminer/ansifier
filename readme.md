@@ -1,15 +1,18 @@
 # ASCIIFIER
 
-I wrote a scrappy little version of this program relatively early in my
-foray into programming. I find it really fun and useful and have occasionally improved it over the years.
+I find this really fun, and sometimes even useful.
 
 I hope to eventually evolve it into something that could be consumed
-by other code and used in the context of something with a terminal UI
-(curses, perhaps?). This might already be out there, I wouldn't know since
+by other code, maybe being used in the context of something with a terminal
+UI (curses, perhaps?). This might already be out there, I wouldn't know since
 I don't know any curses - this is just a passion project!
 
 It uses a handful of switches to provide highly configurable output.
 Check out its output with the -h flag!
+
+One of my favorite features is that it can handle animated .gifs:
+
+  ![a dancing lizard and a spinning Windows 96 install disc as ascii](readme-images/gifs.mp4)
 
 I have ideas for more options, so keep an eye out for updates
 and feel free to reach out to me if you have an idea and want to
