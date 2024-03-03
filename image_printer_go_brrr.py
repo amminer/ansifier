@@ -1,6 +1,8 @@
 #!/bin/python3
 """
  TODO
+ * (re)document stuff - functional version had docstrings that I just kinda dropped
+    when I wrote the classes
  * Code is now reusable (except see below point), but significant refactoring is warranted
  * eliminate use of debug arg!!
  * Would be cool, but maybe scale poorly, to do context-aware unicode blockchars
