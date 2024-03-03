@@ -244,7 +244,7 @@ class ImageFilePrinter():
         image = image.convert('RGBA')
         if args.debug:
             print(f'before: {image.size}')
-        image.thumbnail((self.max_height, self.max_width),
+        image.thumbnail((self.max_width, self.max_height),
                 self.resize_method)
         if args.debug:
             print(f'target: {(self.max_width, self.max_height)}')
