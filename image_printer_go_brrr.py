@@ -135,8 +135,10 @@ class ImageFilePrinter():
 
 
     def print_array(self, ascii_array):
+        output = ''
         for c in ascii_array:
-            print(c, end="")
+            output += c
+        print(output)
 
 
     def prepare_for_dump(self, image):
