@@ -12,7 +12,9 @@ Check out its output with the -h flag!
 
 One of my favorite features is that it can handle animated .gifs:
 
-  ![a dancing lizard and a spinning Windows 96 install disc as ascii](readme-images/gifs.mp4)
+https://github.com/amminer/asciifier/assets/107884857/33ef3ec5-64a6-40ec-bee2-bff622b389b2
+
+(🎶 - Lightsleeper by Windows 96)
 
 I have ideas for more options, so keep an eye out for updates
 and feel free to reach out to me if you have an idea and want to
