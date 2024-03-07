@@ -30,7 +30,7 @@ notice that something is wrong or would like to see a feature implemented, ideal
 issue is created, and after any needed discussion that issue gets translated into a
 ticket on the project's [kanban board](https://github.com/users/amminer/projects/1).
 
-Once I'm satisfied with the state of the code and its functionality I will stop pushing
+Once I'm satisfied with the basic state of the code and its functionality I will stop pushing
 straight to main, I swear! Feature and bug branches coming soon. :)
 
 ## Some examples of the script's utility:
