@@ -16,7 +16,7 @@ from sys import exit, stdout
 from time import sleep
 
 
-just_fix_windows_console()
+just_fix_windows_console()  # checks for windows internally
 TERM_SUPPORTS_UTF8 = False
 if stdout.encoding.lower() == 'utf-8':
     TERM_SUPPORTS_UTF8 = True
