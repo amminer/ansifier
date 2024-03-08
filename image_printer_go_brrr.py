@@ -1,33 +1,31 @@
 #!/bin/python3
 """
  TODO
- * (re)document stuff - functional version had docstrings that I just kinda dropped
-    when I wrote the classes
- * break this out into multiple files to allow for easier incremental commits
- * Code is now reusable (sorta, see next point), but significant refactoring is warranted
- * eliminate use of debug arg!!
- * Would be cool, but maybe scale poorly, to do context-aware unicode blockchars
-   ie have a left-half-block if pixel to left is opaque but right isn't
- * Probably still more cool arguments/switches I haven't thought up...
-   and some I have:
-    - Add an option to output html/css instead of ansi escaped text file
- * eliminate conflicting option interactions (-a and -f, for example)
- * refine input sanitization
- * needs some kind of tests... oh boy
+ * Moved to Github issues/kanban - TODO add a docstring here
 """
 
 
 import argparse
 import pillow_avif  # not ref'd in code, but pillow uses this to support avif
+
 from PIL import Image
-from sys import exit
-from os import path, get_terminal_size
+from colorama import just_fix_windows_console
+from os import path
+from shutil import get_terminal_size
+from sys import exit, stdout
 from time import sleep
 
 
-# Import this or define your own when you instantiate Cell or ImageFilePrinter
-CHARS = ['\u2588', '\u2593', '\u2592', '\u2591',
-        '@', '#', '$', '\u2022', '+', ':', '-', ' ']
+just_fix_windows_console()  # checks for windows internally
+TERM_SUPPORTS_UTF8 = False
+if stdout.encoding.lower() == 'utf-8':
+    TERM_SUPPORTS_UTF8 = True
+
+if TERM_SUPPORTS_UTF8:
+    CHARS = ['\u2588', '\u2593', '\u2592', '\u2591',
+            '@', '#', '$', '\u2022', '+', ':', '-', ' ']
+else:
+    CHARS = [chr(219), '@', '#', '$', '+', ':', '-', ' ']
 
 
 class Cell():
