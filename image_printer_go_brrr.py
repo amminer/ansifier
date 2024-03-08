@@ -10,7 +10,7 @@ import pillow_avif  # not ref'd in code, but pillow uses this to support avif
 
 from PIL import Image
 from colorama import just_fix_windows_console
-from os import path, environ
+from os import path
 from shutil import get_terminal_size
 from sys import exit, stdout
 from time import sleep
