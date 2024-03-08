@@ -9,6 +9,7 @@ import argparse
 import pillow_avif  # not ref'd in code, but pillow uses this to support avif
 
 from PIL import Image
+from colorama import just_fix_windows_console
 from os import path, environ
 from platform import platform
 from shutil import get_terminal_size
@@ -16,9 +17,8 @@ from sys import exit, stdout
 from time import sleep
 
 
+just_fix_windows_console()
 PLATFORM = platform()
-
-
 TERM_SUPPORTS_UTF8 = False
 if stdout.encoding.lower() == 'utf-8':
     TERM_SUPPORTS_UTF8 = True
