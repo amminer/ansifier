@@ -12,13 +12,25 @@ import pillow_avif  # not ref'd in code, but pillow uses this to support avif
 
 from PIL import Image
 from colorama import just_fix_windows_console
-from os import path
+from os import path, access, R_OK, W_OK
 from shutil import get_terminal_size
 from sys import exit, stdout
 from time import sleep
 
 
 LOG_FILENAME = 'asciifier.log'
+
+# for validation
+RESIZE_OPTIONS = {  # input param: (PIL param, readable name)
+    'n': (Image.NEAREST, 'nearest neighbor'),
+    'lz': (Image.LANCZOS, 'Lanczos'),
+    'bl': (Image.BILINEAR, 'bilinear interpolation'),
+    'bc': (Image.BICUBIC, 'bicubic interpolation'),
+    'x': (Image.BOX, 'box'),
+    'h': (Image.HAMMING, 'Hamming')
+}
+
+# use utf-8 if possible, otherwise ascii
 just_fix_windows_console()  # checks for windows internally
 TERM_SUPPORTS_UTF8 = False
 if stdout.encoding.lower() == 'utf-8':
@@ -129,8 +141,7 @@ class ImageFilePrinter():
     * Instantiation with at least an image path, the image to turn into text
       ImageFilePrinter('/path/to/image.png') -> <ImageFilePrinter>
     * After instantiation, calling ImageFilePrinter.save_text(path) will
-      dump output to a file at path, assuming all parent directories exist
-      and the file is writable/in a writable location... TODO error handling
+      dump output to a file at path
     * After instantiation, calling ImageFilePrinter.print_text() will
       dump output to stdout.
 
@@ -155,9 +166,9 @@ class ImageFilePrinter():
             supported image formats are those supported by PIL version 9
             as well as .avif.
         :param max_height: int, restrict output text to this number of rows
-            defaults to calling terminal size (might break stuff? TODO).
+            defaults to calling terminal size according to shutil.get_terminal_size
         :param max_width: int, restrict output text to this number of columns
-            defaults to calling terminal size (might break stuff? TODO).
+            defaults to calling terminal size according to shutil.get_terminal_size
         :param resize_method: PIL.Image.<ResamplingMethod>, see PIL version 9.
         :param char_by_brightness: bool, whether to use brightness to determine
             output glyphs (defaults to False, which will use alpha)
@@ -175,16 +186,23 @@ class ImageFilePrinter():
             with a max size of 10 MB and 2 backups. This is subject to change.
             Defaults to package_directory/asciifier.log.
         """
+        logfile = LOG_FILENAME if logfile is None else logfile
+        self._validate_can_write_file(logfile)
+        self.logger = self._initialize_logger(logfile)
+
         self.chars = chars
         self.intervals = [255/len(CHARS)*i for i in range(len(CHARS)-1, -1, -1)]
-        # TODO refactor validation into function(s)
         self.image_path = image_path
-        if not path.exists(self.image_path):
-            raise FileNotFoundError(f'unable to find file {image_path}')
+        self._validate_can_read_file(self.image_path)
         # TODO validate dims
         self.max_height = max_height
         self.max_width = max_width
-        # TODO validate method
+        valid_resize_methods = [val[0] for val in RESIZE_OPTIONS.values()]
+        if resize_method not in valid_resize_methods:
+            message = 'Invalid resize method: {resize_method}'
+            logger.error(message)
+            raise ValueError(message)
+        #if resize_method not in PIL.resize_methods
         self.resize_method = resize_method
         # TODO validate bool
         self.char_by_brightness = char_by_brightness
@@ -193,9 +211,7 @@ class ImageFilePrinter():
         self.image_object = None
         self.image_to_dump = None
         self.output = None
-        # TODO validate writable path
-        logfile = LOG_FILENAME if logfile is None else logfile
-        self.logger = self._initialize_logger(logfile)
+
         self.logger.debug(f'reading image file {image_path}')
         self.logger.debug(f'working with these chars: {self.chars} (len {len(self.chars)})')
         self.logger.debug(f'working with these intervals: {self.intervals} (len {len(self.intervals)})')
@@ -222,7 +238,7 @@ class ImageFilePrinter():
     def save_text(self, filepath):
         if self.animate:
             #self.save_animated()  # TODO dump and load gif frames!
-            print(f'ERROR, saving animated GIF frames to file not yet implemented')
+            self.logger.error(f'Saving animated GIF frames to file not yet supported')
         else:
             if self.image_to_dump is None:
                 self.image_to_dump = self.prepare_for_dump(self.image_object)
@@ -235,17 +251,88 @@ class ImageFilePrinter():
     def _initialize_logger(self, logpath):
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.INFO)
+
         log_formatter = logging.Formatter('%(asctime)s;%(levelname)s;%(message)s')
+
         log_file_handler = RotatingFileHandler(
             filename=logpath,
             maxBytes=10000000,  # 10 MB
             backupCount=2)
         log_file_handler.setFormatter(log_formatter)
+
+        log_stdout_handler = logging.StreamHandler()
+        log_stdout_handler.setLevel(logging.ERROR)
+        log_stdout_handler.setFormatter(log_formatter)
+
         logger.addHandler(log_file_handler)
+        logger.addHandler(log_stdout_handler)
+
         return logger
+
+    def _validate_can_read_file(self, filepath):
+        """
+        checks three conditions:
+        1. filepath exists
+        2. filepath is not a directory (this should mean it's a file right?)
+        3. filepath is readable (TODO this is redundant right?)
+        if any of these conditions fails, an error is logged
+        and the program exits with an error code.
+        """
+        error_t = None
+        error_message = None
+        filepath = path.abspath(filepath)
+
+        if not (path.exists(filepath)):
+            error_t = FileNotFoundError
+            error_message = f'Unable to read file {filepath}: '\
+                + f'{filepath} does not exist (or is behind a privileged directory)'
+        elif path.isdir(filepath):
+            error_t = IsADirectoryError
+            error_message = f'Unable to read file {filepath}: '\
+                + f'that\'s a directory, not a file'
+        elif not access(filepath, R_OK):
+            error_t = PermissionError
+            error_message = f'Unable to read file {filepath}: '\
+                + 'insufficient permissions'
+
+        if error_t is not None:
+            self.logger.error(error_message)
+            raise error_t(error_message)
+
+    def _validate_can_write_file(self, filepath):
+        """
+        checks three conditions:
+        1. filepath's parent directory exists
+        2. filepath is not a directory (this should mean it's a file right?)
+        3. filepath's parent directory is writable
+        if any of these conditions fails, an error is logged
+        and the program exits with an error code.
+        """
+        error_t = None
+        error_message = None
+        filepath = path.abspath(filepath)
+        parent_dir = path.dirname(filepath)
+
+        if not (path.exists(parent_dir)):
+            error_t = FileNotFoundError
+            error_message = f'Unable to write to file {filepath}: '\
+                + f'{parent_dir} does not exist (or is behind a privileged directory)'
+        elif path.isdir(filepath):
+            error_t = IsADirectoryError
+            error_message = f'Unable to write to file {filepath}: '\
+                + f'that\'s a directory, not a file'
+        elif not access(parent_dir, W_OK):
+            error_t = PermissionError
+            error_message = f'Unable to write to file {filepath}: '\
+                + 'insufficient permissions'
+
+        if error_t is not None:
+            self.logger.error(error_message)
+            raise error_t(error_message)
 
 
     def _save_file(self, filepath):
+        self._validate_can_write_file(filepath)
         with open(filepath, 'w') as wf:
             for c in self.output:
                 wf.write(c)
@@ -296,7 +383,6 @@ class ImageFilePrinter():
 
 
     def _image_to_text_array(self, image=None):
-        #TODO This might be unnecessary - why not just go straight to string?
         if image is None:
             image = self.image_object
         self.logger.debug(f'converting {image} to text array')
@@ -318,14 +404,6 @@ if __name__ == "__main__":
     """
     #UNICODE_ONLY
     NUM_CHARS = len(CHARS)
-    resize_options = {  # input param: (PIL param, readable name)
-        'lz': (Image.LANCZOS, 'Lanczos'),
-        'bl': (Image.BILINEAR, 'bilinear interpolation'),
-        'bc': (Image.BICUBIC, 'bicubic interpolation'),
-        'n': (Image.NEAREST, 'nearest neighbor'),
-        'x': (Image.BOX, 'box'),
-        'h': (Image.HAMMING, 'Hamming')
-    }
     cell_warning = 'note that a cell is roughly square, i.e. it is '\
         '2 terminal characters wide and 1 terminal character tall.'
 
@@ -363,7 +441,7 @@ if __name__ == "__main__":
                 #'and bad values are likely to break the program. '
                 #f'Available chars are: {CHARS}')
 
-    readable_resize_options = {(k, v[1]) for k, v in resize_options.items()}
+    readable_resize_options = {(k, v[1]) for k, v in RESIZE_OPTIONS.items()}
     argparser.add_argument('-r', '--resize-method', action='store', type=str,
         required=False, default='lz', help='algorithm used for resampling '
             'image to desired output dimensions. Defaults to "lz", Lanczos, which '
@@ -414,7 +492,7 @@ if __name__ == "__main__":
     CHAR_BY_BRIGHTNESS = args.char_by_brightness
     ANIMATE = args.animate
     try:
-        RESIZE_METHOD = resize_options[args.resize_method][0]
+        RESIZE_METHOD = RESIZE_OPTIONS[args.resize_method][0]
     except KeyError:
         print('error: bad value passed to resize_method switch; '
             'see `{__file__} -h`.')
