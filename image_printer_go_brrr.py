@@ -5,6 +5,8 @@
 """
 
 
+import logging
+from logging.handlers import RotatingFileHandler
 import argparse
 import pillow_avif  # not ref'd in code, but pillow uses this to support avif
 
@@ -15,6 +17,17 @@ from shutil import get_terminal_size
 from sys import exit, stdout
 from time import sleep
 
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+log_formatter = logging.Formatter('%(asctime)s;%(levelname)s;%(message)s')
+# TODO put this file somewhere else?
+log_file_handler = RotatingFileHandler(
+    filename='asciifier.log',
+    maxBytes=10000000,  # 10 MB
+    backupCount=2)
+log_file_handler.setFormatter(log_formatter)
+logger.addHandler(log_file_handler)
 
 just_fix_windows_console()  # checks for windows internally
 TERM_SUPPORTS_UTF8 = False
@@ -184,11 +197,11 @@ class ImageFilePrinter():
             print(f'unable to find file {image_path}')
             exit(1)
         else:
-            if args.debug:  # TODO find a better way to do this
-                print(f'working with these chars: {self.chars} (len {len(self.chars)})')
-                print(f'working with these intervals: {self.intervals} (len {len(self.intervals)})')
-                if self.max_height is None or self.max_width is None:
-                    print('Getting terminal dimensions')
+            logger.debug(f'reading image file {image_path}')
+            logger.debug(f'working with these chars: {self.chars} (len {len(self.chars)})')
+            logger.debug(f'working with these intervals: {self.intervals} (len {len(self.intervals)})')
+            if self.max_height is None or self.max_width is None:
+                logger.debug('Getting terminal dimensions')
             if self.max_height is None:
                 self.max_height = get_terminal_size().lines - 1  # -1 accounts for prompt
             if self.max_width is None:
@@ -203,8 +216,7 @@ class ImageFilePrinter():
         else:
             if self.image_to_dump is None:
                 self.image_to_dump = self.prepare_for_dump(self.image_object)
-            if args.debug:
-                print(f'dumping {self.image_to_dump} to stdout')
+            logger.debug(f'dumping {self.image_to_dump} to stdout')
             self._dump_output_to_stdout(self._image_to_text_array(self.image_to_dump))
 
 
@@ -217,8 +229,7 @@ class ImageFilePrinter():
                 self.image_to_dump = self.prepare_for_dump(self.image_object)
             if self.output is None:
                 self._generate_output_str(self._image_to_text_array(self.image_to_dump))
-            if args.debug:
-                print(f'dumping {self.image_to_dump} to {filepath}')
+            logger.debug(f'dumping {self.image_to_dump} to {filepath}')
             self._save_file(filepath)
 
     def _save_file(self, filepath):
@@ -240,13 +251,11 @@ class ImageFilePrinter():
 
     def prepare_for_dump(self, image):
         image = image.convert('RGBA')
-        if args.debug:
-            print(f'before: {image.size}')
+        logger.debug(f'before: {image.size}')
         image.thumbnail((self.max_width, self.max_height),
                 self.resize_method)
-        if args.debug:
-            print(f'target: {(self.max_width, self.max_height)}')
-            print(f'after: {image.size}')
+        logger.debug(f'target: {(self.max_width, self.max_height)}')
+        logger.debug(f'after: {image.size}')
         return image
 
 
@@ -255,22 +264,18 @@ class ImageFilePrinter():
         frames = []
         print(f'Processing frames from {self.image_path}...')
         while True:
-            if args.debug:
-                print()
-                print(f'Processing frame {image.tell()}')
+            logger.debug(f'Processing frame {image.tell()}')
             frame = self.prepare_for_dump(image)
             frames.append(self._image_to_text_array(frame))
             try:
                 image.seek(image.tell() + 1)
             except EOFError:
-                if args.debug:
-                    print(f'No more frames in image')
+                logger.debug(f'No more frames in image')
                 break
         done = False
         while not done:
             for frame in frames:
-                if args.debug:
-                    print(f'dumping {image} to stdout')
+                logger.debug(f'dumping {image} to stdout')
                 self._dump_output_to_stdout(frame)
                 sleep(self.animate / 1000.0)
                 if not args.loop_infinitely:
@@ -281,8 +286,7 @@ class ImageFilePrinter():
         #TODO This might be unnecessary - why not just go straight to string?
         if image is None:
             image = self.image_object
-        if args.debug:
-            print(f'converting {image} to text array')
+        logger.debug(f'converting {image} to text array')
         ret = []
         for j in range(image.size[1]):
             for i in range(image.size[0]):
@@ -416,6 +420,8 @@ if __name__ == "__main__":
         CHARS.append(' ')
     if args.invert:
         CHARS = CHARS[-1::-1]
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
     #if args.no_whitespace:
         #CHARS.remove(' ')
     #INTERVALS = [255/len(CHARS)*i for i in range(len(CHARS)-1, -1, -1)]
@@ -428,13 +434,12 @@ if __name__ == "__main__":
             #if new_interval <= 255:
                 #INTERVALS[i] = new_interval
     #main(args.imageFilePath, args.max_height, args.max_width)
-    resize_method = resize_options[args.resize_method][0]
 
     image_printer = ImageFilePrinter(
         args.image_path,
         args.max_height,
         args.max_width,
-        resize_method,
+        RESIZE_METHOD,
         args.char_by_brightness,
         CHARS,
         args.animate)
