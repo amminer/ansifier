@@ -1,7 +1,13 @@
 #!/bin/python3
 """
- TODO
- * Moved to Github issues/kanban - TODO add a docstring here
+ TODO/ideas for improvements not yet made into GitHub issues
+ * enhancement: add a docstring here
+ * enhancement: generalize a wrapper for _validate functions to dry code out
+ * enhancement: more robust tests that valid inputs work
+ * enhancement: test for expected exceptions with bad inputs!
+ * enhancement: add utf-8 check to AsciifierInputValidator, warn if warranted
+ * feature/enhancement: disable validation (probably slows things down...)
+ * feature: save and load gif frames to and from files (proprietary format?...)
 """
 
 
@@ -31,7 +37,6 @@ RESIZE_OPTIONS = {  # input param: (PIL param, readable name)
 }
 
 # use utf-8 if possible, otherwise ascii
-just_fix_windows_console()  # checks for windows internally
 TERM_SUPPORTS_UTF8 = False
 if stdout.encoding.lower() == 'utf-8':
     TERM_SUPPORTS_UTF8 = True
@@ -43,7 +48,69 @@ else:
     CHARS = [chr(219), '@', '#', '$', '+', ':', '-', ' ']
 
 
-class Cell():
+class AsciifierInputValidator():
+    """
+    contains input validation functions
+    shared between Cell and ImageFilePrinter classes.
+    Only intended to be subclassed.
+    """
+
+    def _validate_char_list(self, chars):
+        """
+        Checks:
+        1. chars is a list
+            may raise TypeError
+        2. len(chars) >=1
+            may raise ValueError
+        """
+        error_t = None
+        error_message = None
+
+        if not isinstance(chars, list):
+            error_t = TypeError
+            error_message = f'chars parameter must be a list, but {__class__} '\
+                'received {type(chars)}'
+
+        elif not len(chars) >= 1:
+            error_t = ValueError
+            error_message = f'char list must have 1 or more element(s), '\
+                'but {__class__} received {chars}'
+
+        if error_t is not None:
+            logger.error(message)
+            raise TypeError(message)
+
+
+    def _validate_positive_nonzero_int(self, i_to_check, message=None):
+        """
+        Checks
+        1. i_to_check is an integer
+        2. i_to_check is > 0
+        May raise a ValueError if either check fails
+        """
+        if message is None:
+            message = 'param must be an integer > 0, but {self.__class__} '\
+                'received {i_to_check}'
+        try:
+            i_to_check = int(i_to_check)
+        except ValueError as e:
+            logger.error(str(e) + message)
+            raise e  # TODO append message before raising
+
+        if not i_to_check > 0:
+            raise ValueError(message)
+
+    
+    def _validate_is_boolean(self, var_to_check, message=None):
+        if message is None:
+            message = 'parameter must be a boolean, '\
+                'but {self.__class__} received {type(var_to_check)}'
+        if not isinstance(var_to_check, bool):
+            logger.error(message)
+            raise TypeError(message)
+
+
+class Cell(AsciifierInputValidator):
     """
     The intended public interface for this class is:
     * instantiation with at least a tuple of (r, g, b, a) integers,
@@ -74,11 +141,13 @@ class Cell():
             from least to most visible when printed to a terminal
         """
         if chars is None:
-            self.chars = CHARS
-        else:
-            self.chars = chars
+            chars = CHARS
+        self._validate_char_list(chars)
+        self.chars = chars
         self.intervals = [255/len(self.chars)*i
                           for i in range(len(self.chars)-1, -1, -1)]
+
+        self._validate_pixel(pixel)
         self.pixel = pixel
         self.from_brightness = from_brightness
         self.char = self._get_char()
@@ -90,10 +159,40 @@ class Cell():
 
 
     def __str__(self):
-        # 2x printable character, assume term chars ~2x as tall as wide
+        # assume a terminal character is about twice as tall as it is wide
         ret = str(self.color_escape + self.char) * 2\
             + self.reset_escape  # TODO limit resets?
         return ret
+
+
+    def _validate_pixel(self, pixel):
+        """
+        Checks:
+        1. pixel is a tuple
+            may raise TypeError
+        2. pixel has 4 members
+            may raise ValueError
+        3. each member of pixel is an integer between 0 and 255
+            may raise ValueError
+        """
+        error_t = None
+        error_message = None
+        if not isinstance(pixel, tuple):
+            error_t = TypeError
+            error_message = f'pixel parameter must be a tuple, but '\
+                '{__class__} received a {type(pixel)}'
+        elif not len(pixel) == 4:
+            error_t = ValueError
+            error_message = f'pixel parameter must have 4 members, but '\
+                '{__class__} received {len(pixel)}'
+        elif not all(map(lambda el: 0 <= el and el <= 255, pixel)):
+            error_t = ValueError
+            error_message = f'pixel parameter elements must each be an '\
+                'integer >=0 and <=255, but {__class__} received {pixel}'
+
+        if error_t is not None:
+            logger.error(message)
+            raise TypeError(message)
 
 
     def _get_char(self):
@@ -104,7 +203,7 @@ class Cell():
 
 
     def _get_char_from_brightness(self):
-        # TODO RGB check?
+        """ use sum of RGB values to determine char """
         char = None
         brightness = self.pixel[0] + self.pixel[1] + self.pixel[2]  # max. 765
         for i, interval in enumerate(self.intervals):
@@ -119,7 +218,7 @@ class Cell():
 
 
     def _get_char_from_alpha(self):
-        # TODO rgba check?
+        """ use transparency to determine char """
         char = None
         a = self.pixel[3]
         for i, interval in enumerate(self.intervals):
@@ -135,7 +234,7 @@ class Cell():
         return char
 
 
-class ImageFilePrinter():
+class ImageFilePrinter(AsciifierInputValidator):
     """
     The intended public interface for this class is
     * Instantiation with at least an image path, the image to turn into text
@@ -166,9 +265,9 @@ class ImageFilePrinter():
             supported image formats are those supported by PIL version 9
             as well as .avif.
         :param max_height: int, restrict output text to this number of rows
-            defaults to calling terminal size according to shutil.get_terminal_size
+            defaults to calling terminal size from shutil.get_terminal_size
         :param max_width: int, restrict output text to this number of columns
-            defaults to calling terminal size according to shutil.get_terminal_size
+            defaults to calling terminal size from shutil.get_terminal_size
         :param resize_method: PIL.Image.<ResamplingMethod>, see PIL version 9.
         :param char_by_brightness: bool, whether to use brightness to determine
             output glyphs (defaults to False, which will use alpha)
@@ -190,60 +289,80 @@ class ImageFilePrinter():
         self._validate_can_write_file(logfile)
         self.logger = self._initialize_logger(logfile)
 
+        self._validate_char_list(chars)
         self.chars = chars
         self.intervals = [255/len(CHARS)*i for i in range(len(CHARS)-1, -1, -1)]
+
+        self._validate_can_read_file(image_path)
         self.image_path = image_path
-        self._validate_can_read_file(self.image_path)
-        # TODO validate dims
-        self.max_height = max_height
-        self.max_width = max_width
+
         valid_resize_methods = [val[0] for val in RESIZE_OPTIONS.values()]
         if resize_method not in valid_resize_methods:
             message = 'Invalid resize method: {resize_method}'
             logger.error(message)
             raise ValueError(message)
-        #if resize_method not in PIL.resize_methods
         self.resize_method = resize_method
-        # TODO validate bool
+
+        self._validate_is_boolean(char_by_brightness,
+            'char_by_brightness must be a boolean, '
+            'but {self.__class__} received {type(var_to_check)}')
         self.char_by_brightness = char_by_brightness
-        # TODO validate uint
+
+        if animate != 0:
+            self._validate_positive_nonzero_int(animate,
+                'animate parameter must be a non-negative integer, but '
+                f'{__class__} received {animate}')
         self.animate = animate
+
         self.image_object = None
         self.image_to_dump = None
         self.output = None
 
         self.logger.debug(f'reading image file {image_path}')
-        self.logger.debug(f'working with these chars: {self.chars} (len {len(self.chars)})')
-        self.logger.debug(f'working with these intervals: {self.intervals} (len {len(self.intervals)})')
+        self.logger.debug(f'working with these chars: {self.chars} '
+            '(len {len(self.chars)})')
+        self.logger.debug(f'working with these intervals: {self.intervals} '
+            '(len {len(self.intervals)})')
+        self.max_height = max_height 
+        self.max_width = max_width
         if self.max_height is None or self.max_width is None:
             self.logger.debug('Getting terminal dimensions')
         if self.max_height is None:
-            self.max_height = get_terminal_size().lines - 1  # -1 accounts for prompt
+            self.max_height = get_terminal_size().lines - 1  # -1 for prompt
         if self.max_width is None:
+            # assume a terminal character is about twice as tall as it is wide
             self.max_width = get_terminal_size().columns // 2
-        # assume a terminal character is about twice as tall as it is wide
-        self.image_object = Image.open(image_path)  # TODO error handling af
+        self._validate_dimensions(self.max_height, self.max_width)
+        try:
+            self.image_object = Image.open(image_path)
+        except Exception as e:
+            logger.critical(e)
+            raise e
 
 
     def print_text(self):
+        just_fix_windows_console()  # checks for windows internally
         if self.animate:
             self._print_animated()
         else:
             if self.image_to_dump is None:
                 self.image_to_dump = self.prepare_for_dump(self.image_object)
             self.logger.debug(f'dumping {self.image_to_dump} to stdout')
-            self._dump_output_to_stdout(self._image_to_text_array(self.image_to_dump))
+            self._dump_output_to_stdout(self._image_to_text_array(
+                self.image_to_dump))
 
 
     def save_text(self, filepath):
         if self.animate:
             #self.save_animated()  # TODO dump and load gif frames!
-            self.logger.error(f'Saving animated GIF frames to file not yet supported')
+            self.logger.error(
+                f'Saving animated GIF frames to file not yet supported')
         else:
             if self.image_to_dump is None:
                 self.image_to_dump = self.prepare_for_dump(self.image_object)
             if self.output is None:
-                self._generate_output_str(self._image_to_text_array(self.image_to_dump))
+                self._generate_output_str(self._image_to_text_array(
+                    self.image_to_dump))
             self.logger.debug(f'dumping {self.image_to_dump} to {filepath}')
             self._save_file(filepath)
 
@@ -252,7 +371,8 @@ class ImageFilePrinter():
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.INFO)
 
-        log_formatter = logging.Formatter('%(asctime)s;%(levelname)s;%(message)s')
+        log_formatter = logging.Formatter(
+            '%(asctime)s;%(levelname)s;%(message)s')
 
         log_file_handler = RotatingFileHandler(
             filename=logpath,
@@ -269,66 +389,90 @@ class ImageFilePrinter():
 
         return logger
 
+
     def _validate_can_read_file(self, filepath):
         """
         checks three conditions:
         1. filepath exists
+            may raise a FileNotFoundError
         2. filepath is not a directory (this should mean it's a file right?)
+            may raise a IsADirectoryError
         3. filepath is readable (TODO this is redundant right?)
-        if any of these conditions fails, an error is logged
-        and the program exits with an error code.
+            may raise a PermissionError
         """
         error_t = None
         error_message = None
-        filepath = path.abspath(filepath)
+        try:
+            filepath = path.abspath(filepath)
+        except TypeError as e:
+            self.logger.error(e)
+            raise e
 
         if not (path.exists(filepath)):
             error_t = FileNotFoundError
-            error_message = f'Unable to read file {filepath}: '\
-                + f'{filepath} does not exist (or is behind a privileged directory)'
+            error_message = f'Unable to read file {filepath}: does not exist '\
+                '(or is behind a privileged directory)'
         elif path.isdir(filepath):
             error_t = IsADirectoryError
             error_message = f'Unable to read file {filepath}: '\
-                + f'that\'s a directory, not a file'
+                f'that\'s a directory, not a file'
         elif not access(filepath, R_OK):
             error_t = PermissionError
             error_message = f'Unable to read file {filepath}: '\
-                + 'insufficient permissions'
+                'insufficient permissions'
 
         if error_t is not None:
             self.logger.error(error_message)
             raise error_t(error_message)
+
 
     def _validate_can_write_file(self, filepath):
         """
         checks three conditions:
         1. filepath's parent directory exists
+            may raise FileNotFoundError
         2. filepath is not a directory (this should mean it's a file right?)
+            may raise IsADirectoryError
         3. filepath's parent directory is writable
-        if any of these conditions fails, an error is logged
-        and the program exits with an error code.
+            may raise PermissionError
         """
         error_t = None
         error_message = None
-        filepath = path.abspath(filepath)
+        try:
+            filepath = path.abspath(filepath)
+        except TypeError as e:
+            self.logger.error(e)
+            raise e
         parent_dir = path.dirname(filepath)
 
         if not (path.exists(parent_dir)):
             error_t = FileNotFoundError
-            error_message = f'Unable to write to file {filepath}: '\
-                + f'{parent_dir} does not exist (or is behind a privileged directory)'
+            error_message = f'Unable to write to {filepath}: {parent_dir} '\
+                'does not exist (or is behind a privileged directory)'
         elif path.isdir(filepath):
             error_t = IsADirectoryError
             error_message = f'Unable to write to file {filepath}: '\
-                + f'that\'s a directory, not a file'
+                f'that\'s a directory, not a file'
         elif not access(parent_dir, W_OK):
             error_t = PermissionError
             error_message = f'Unable to write to file {filepath}: '\
-                + 'insufficient permissions'
+                'insufficient permissions'
 
         if error_t is not None:
             self.logger.error(error_message)
             raise error_t(error_message)
+
+
+    def _validate_dimensions(self, max_height, max_width):
+        """
+        For each dimension, checks:
+        1. dimension is an integer
+        2. dimension is > 0
+        May raise a ValueError if either check fails
+        """
+        for dim in (max_height, max_width):
+            self._validate_positive_nonzero_int(dim, 'requested dimension must '
+                'be an integer > 0, but {__class__} received {dim}')
 
 
     def _save_file(self, filepath):
@@ -337,11 +481,13 @@ class ImageFilePrinter():
             for c in self.output:
                 wf.write(c)
 
+
     def _generate_output_str(self, text_array):
         output = ''
         for c in text_array:
             output += c
         self.output = output
+
 
     def _dump_output_to_stdout(self, text_array):
         if self.animate or self.output is None:
@@ -415,7 +561,6 @@ if __name__ == "__main__":
         'character. By default, the image is scaled to the maximum dimensions '
         'that will fit within the terminal calling this program.')
 
-    # TODO handle bad indiv. values and combinations of these
     argparser.add_argument('-H', '--max-height', action='store', type=int,
         required=False, default=None,
         help='Restrict output to this many rows at most; ' + cell_warning)
@@ -433,7 +578,7 @@ if __name__ == "__main__":
                 f'from low (transparent) output options; preserves space char. '
                 'Available chars are: {CHARS}')
 
-    # TODO this is also a fun idea, but tricky in combination with other options
+    # TODO this is a fun idea, but tricky in combination with other options
     #argparser.add_argument('-o', '--char-offset', action='store',
             #type=int, required=False, default=0, help='shift <arg> chars '
                 #'higher in the array of available chars, without dropping the '
@@ -444,9 +589,9 @@ if __name__ == "__main__":
     readable_resize_options = {(k, v[1]) for k, v in RESIZE_OPTIONS.items()}
     argparser.add_argument('-r', '--resize-method', action='store', type=str,
         required=False, default='lz', help='algorithm used for resampling '
-            'image to desired output dimensions. Defaults to "lz", Lanczos, which '
-            'tends to work best when scaling images down to normal terminal '
-            f'dimensions. Options are: {readable_resize_options}')
+            'image to desired output dimensions. Defaults to "lz", Lanczos, '
+            'which tends to work best when scaling images down to normal '
+            f'terminal dimensions. Options are: {readable_resize_options}')
 
     argparser.add_argument('-a', '--animate', action='store',
         required=False, type=int, default=0,
@@ -456,18 +601,18 @@ if __name__ == "__main__":
 
     argparser.add_argument('-f', '--save-to-file', action='store', type=str,
         required=False, default=None, help='Write output to a file. '
-            'Does not suppress terminal output. Will create or overwrite the file '
-            'if needed, but will not create new directories.')
+            'Does not suppress terminal output. Will create or overwrite the '
+            'file if needed, but will not create new directories.')
 
     argparser.add_argument('-L', '--loop-infinitely', action='store_true',
         required=False, default=False,
-        help='With -a --animage, causes the animation to loop until the program '
-            'is terminated.')
+        help='With -a --animage, causes the animation to loop until the '
+        'program is terminated.')
 
     argparser.add_argument('-b', '--char-by-brightness', action='store_true',
         required=False, default=False, help='Use brightness (instead of '
-            'alpha) to determine character used to represent an input region in '
-            'output.')
+            'alpha) to determine character used to represent an input region '
+            'in output.')
 
     argparser.add_argument('-i', '--invert', action='store_true',
         required=False, default=False,
@@ -502,8 +647,8 @@ if __name__ == "__main__":
     #offset = args.char_offset
 
     if limit + negative_limit >= NUM_CHARS - 1:
-        print(f'error: total of character limit arguments must be < {NUM_CHARS-1} '
-            f'to get any visible output; see `{__file__} -h`.')
+        print(f'error: total of character limit arguments must be < '
+            f'{NUM_CHARS-1} to get any visible output; see `{__file__} -h`.')
         exit(1)
     CHARS = CHARS[limit:]
     if negative_limit != 0:
