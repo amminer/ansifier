@@ -7,6 +7,9 @@ TODO/ideas for improvements not yet made into GitHub issues:
         as of right now, the image file stays in memory for the lifetime
         of the ImageFilePrinter object.
         This entails significant structural changes to the class!
+        * This will also be an opportunity to refine reusability of instances.
+           You should be able to resize the maximum dimensions, reload the image
+           file/regenerate the output string, etc.
     * enhancement: add a docstring here
     * enhancement: generalize a wrapper for _validate functions to dry code out
     * enhancement: more robust tests that valid inputs work
@@ -15,6 +18,8 @@ TODO/ideas for improvements not yet made into GitHub issues:
     * feature/enhancement: option: disable validation (performance optimization)
     * feature: save and load gif frames to and from files (proprietary format?)
     * feature: allow ImageFilePrinter to reload image file
+    * feature: add ability to mandate output dimensions
+       (scale to different aspect ratios)
 """
 
 
