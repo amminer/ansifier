@@ -1,86 +1,96 @@
 # ASCIIFIER
 
-The main script (named image_printer_go_brrr.py, which I really should have changed before posting to github)
-reads an image file into memory and parses it into colored text using ansi escapes,
-then dumps it to stdout. I find this really fun, and sometimes even useful.
+## 📜 Table of Contents
 
-I hope to eventually evolve it into something that could be easily consumed
-by other code, maybe being used in the context of something with a terminal
-UI (curses, perhaps?). I also have at least one good idea for how I would
-integrate this into a broader program of my own design.
+- [About](#about)
+- [Prerequisites](#prereqs)
+- [Installation](#installation)
+- [Authors](#authors)
+- [Built Using](#built_using)
+- [Acknowledgements](#acknowledgements)
 
-It uses a handful of switches to provide highly configurable output when called
-as the main module from the terminal. Check out the -h flag!
+## 🧐 About <a name = "about"></a>
 
-I've only tested this on Linux in gnome-terminal under X11 (works great) and on Windows 10
-in msys2/git bash (works not so great), but I have had a friend
-clone it and run it in powershell and cmd on Windows 11 with reasonable results.
-None of the windows-based terminals I've seen it run on don't seem to behave as well with
-animated gifs. I intend to resolve this before extending the core function of the image printer
-script any further - see the issues tab on github.
+`asciifier` is a python package which exposes a simple interface
+for converting image files to utf-8 or ascii encoded strings.
+At present, `asciifier` is only able to create its colorful output using ANSI escape codes,
+but plans are being made to add HTML/CSS output and potentially other formats.
 
-Anyway, here it is in action!
+## 🛠 Prerequisites <a name = "prereqs"></a>
 
-https://github.com/amminer/asciifier/assets/107884857/33ef3ec5-64a6-40ec-bee2-bff622b389b2
+Python 3.10 and higher *should* work. Older versions of Python *may* work.
+3.9 is especially likely to be okay, but extensive testing has not been done.
 
-(🎶 - Lightsleeper by Windows 96)
+`asciifier`'s ANSI-escaped output *should* work as intended on any modern terminal with
+true color support, and *may* work on terminals without this support,
+albeit with funny looking colors.
 
-I'm using a github-issues-first approach to manage work on this project - when you or I
-notice that something is wrong or would like to see a feature implemented, ideally an
-issue is created, and after any needed discussion that issue gets translated into a
-ticket on the project's [kanban board](https://github.com/users/amminer/projects/1).
+A comprehensive list of terminal environments where `asciifier` has been observed to
+be working correctly has not been compiled, but basically any common Windows 10+ or Linux
+environment should be okay. No testing or usage has taken place whatsoever on Mac OSX,
+to my knowledge.
 
-Once I'm satisfied with the basic state of the code and its functionality I will stop pushing
-straight to main, I swear! Feature and bug branches coming soon. :)
+Note that `asciifier` does NOT seem to play nice with
+[bpython](https://bpython-interpreter.org/),
+which is a real shame because I love that program.
+Other similar environments which also make use of ANSI escapes may be similarly
+disagreeable to `asciifier`'s emissions.
 
-## Some examples of the script's utility:
+## 📦 Installation <a name = "installation"></a>
 
-* Easily generate little graphics for notes you're taking:
+I intend to publish `asciifier` to PyPI in the near future, but for now you have to:
 
-  ![program being used to generate a haxor guy](readme-images/haxor.png)
+* clone this repository
+* create and activate a virtual environment
+* use pip to install the packages in requirements.txt
+  * to run tests, install requirements_dev.txt instead
 
-  ```
-  ...
-  metasploit of course:
+If you cloned the repository to somewhere on your PYTHONPATH, you should be able to use it
+like so:
 
-                 ++$$$$--
-                $$##$$##$
-                $$ > <  +
-              ++$$  ω  #-
-          --$$@@@@#   $$
-          $$@@@@@@@@####++
-        --@@##$$@@@@##@@@@--    --++--
-        $$@@$$$$ get pwnd $     $$@@##++--
-        ####++##@@# lol #$$     $$@@@@@@##
-      --####++$$$$@@##$$##$$    $$@@##@@@@
-      --@@@@####$$$$##@@##$$    ##@@##@@$$
-        $$####@@##++$$######++--##@@##@@++
-          $$##$$##$$----$$@@##$$##@@@@@@++ ___
-          ++##$$$$++++--++$$$$$$$$$$$$$$   __ |
-            ----    ----                    | |
-                                            | |          INTERFACES
-           |````````````````````````````````` |          ___________
-           | |`````````````````````````````````         | console   |
-           | |                        LIBRARIES         |           |
-           | |                        __________        | cli       |
-           | |_______ TOOLS ======== | rex      |       |           |
-           L_________                |          |       | web       |
-                      PLUGINS ====== | msfcore  | ===== |           |
-                                     |          |       | gui       |
-                                     | msf base |       |           |
-                                     ````````````       | armitage  |
-                             modules      ||            `````````````
-                       ___________________________________________________
-                      |                                                   |
-                      | payloads  exploits  encoders  post-mods auxiliary |
-                      |                                                   |
-                      `````````````````````````````````````````````````````
+```py
+from asciifier import ImageFilePrinter
+p = ImageFilePrinter('path/to/an/image.file')
+p.print_text()
+p.save_file('path/to/output/file')
+```
 
-  There's also Cobalt Strike -
-  ...
-  ```
+https://github.com/amminer/asciifier/assets/107884857/3ceab1fb-dbf5-44ef-9421-5e42a34cee66
 
-* Make neofetch less ugly (especially on Linux Mint):
+You can also run the script located in the package's root, `image_printer_go_brrr.py`,
+which takes a file path as its only required argument as well as many
+optional arguments to modify the output or save it to a file.
+The script offers a command-line flag or argument for every feature that ImageFilePrinter
+takes on initialization, as well as a few extra options for added convenience.
+The --help output is pretty thorough.
 
-  ![output of neofetch patched with the output from this program](readme-images/meofetch.png)
+## 👥 Authors  <a name = "authors"></a>
 
+So far I ([@amminer](https://github.com/amminer)) am the only contributor.
+
+## ⚙ Built Using <a name = "built_using"></a>
+
+AKA shoutouts to my favorite tools:
+
+* 🐍 [Python](https://www.python.org/), of course
+* 🐂 GNU [Bash](https://www.gnu.org/savannah-checkouts/gnu/bash/) and
+  [Coreutils](https://www.gnu.org/savannah-checkouts/gnu/coreutils)
+* 📝 [Vim](https://www.vim.org/)
+
+Running under
+
+* 👣 [GNOME Terminal](https://help.gnome.org/users/gnome-terminal/stable/)
+
+On
+
+* 🐧 [Linux Mint](https://linuxmint.com/) with
+* 🌿 [Cinnamon DE](https://github.com/linuxmint/Cinnamon)
+
+## 🙏 Acknowledgements  <a name = "acknowledgements"></a>
+
+Big thanks to the maintainers of a few very useful packages that this package depends on.
+* [Pillow](https://github.com/python-pillow/Pillow) for implementing
+all those image scaling algorithms
+* [colorama](https://github.com/tartley/colorama) for dealing with Windows nonsense
+  so I don't have to 😄
+* [pytest](https://docs.pytest.org/en/8.0.x/), my beloved
