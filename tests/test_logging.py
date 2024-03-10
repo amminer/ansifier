@@ -1,24 +1,34 @@
 """
-Tests whether logging to file works
+Tests whether logging to file appears to be working
 """
 
 
 import os
 from logging import DEBUG
 
-from asciifier.image_printer_go_brrr import ImageFilePrinter
+from asciifier import ImageFilePrinter, PACKAGE_ROOT
+
+
+TEST_IMAGE_PATH = f'{PACKAGE_ROOT}/images-examples/catClout.png'
+
+LOG_PATH = f'{PACKAGE_ROOT}/tests/temp.log'
 
 
 def test_logging():
     """ 
-    Does not actually check its contents, just that it is created and has data.
+    Checks:
+    * log file was created
+    * log file had some data written to it
+    DOES NOT check value of contents, but probably should
+    TODO
     """
-    logpath = 'test.log'
-    printer = ImageFilePrinter('./example-images/catClout.png', logfile=logpath)
+    printer = ImageFilePrinter(TEST_IMAGE_PATH, logfile=LOG_PATH)
+
     printer.logger.setLevel(DEBUG)
     printer.print_text()
 
-    assert(os.path.exists(logpath))
-    assert(os.path.getsize(logpath) > 0)
-    os.remove(logpath)
+    assert(os.path.exists(LOG_PATH))
+    assert(os.path.getsize(LOG_PATH) > 0)
+
+    os.remove(LOG_PATH)
 
