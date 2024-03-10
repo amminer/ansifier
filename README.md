@@ -1,4 +1,4 @@
-# ASCIIFIER
+<h1 align="center">ASCIIFIER</h1>
 
 ## 📜 Table of Contents
 
