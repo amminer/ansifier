@@ -52,7 +52,7 @@ like so:
 from asciifier import ImageFilePrinter
 p = ImageFilePrinter('path/to/an/image.file')
 p.print_text()
-p.save_file('path/to/output/file')
+p.save_file('path/to/output.file')
 ```
 
 https://github.com/amminer/asciifier/assets/107884857/3ceab1fb-dbf5-44ef-9421-5e42a34cee66
