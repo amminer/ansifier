@@ -276,7 +276,8 @@ class ImageFilePrinter(AsciifierInputValidator):
             with a max size of 10 MB and 2 backups. This is subject to change.
             Defaults to package_directory/asciifier.log.
         """
-        logfile = LOG_FILENAME if logfile is None else logfile
+        if logfile is None:
+            logfile = path.join(path.dirname(__file__), '..', LOG_FILENAME)
         self._validate_can_write_file(logfile)
         self.logger = self._initialize_logger(logfile)
 
