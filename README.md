@@ -64,6 +64,12 @@ The script offers a command-line flag or argument for every feature that ImageFi
 takes on initialization, as well as a few extra options for added convenience.
 The --help output is pretty thorough.
 
+Note that, for every level of resource load on every different stack, there is a different
+upper bound on the output size and a lower bound on the delay between frames for printing
+the output derived from animated .gif files to the terminal. This bottleneck appears to
+be at the terminal emulator layer. I'm currently exploring options to improve performance,
+but it's possible that there's a fundamental limitation here depending on your environment.
+
 ## 👥 Authors  <a name = "authors"></a>
 
 So far I ([@amminer](https://github.com/amminer)) am the only contributor.
