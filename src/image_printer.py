@@ -14,7 +14,7 @@ TODO/ideas for improvements not yet made into GitHub issues:
     * enhancement: generalize a wrapper for _validate functions to dry code out
     * enhancement: more robust tests that valid inputs work
     * enhancement: test for expected exceptions with bad inputs!
-    * enhancement: add utf-8 check to AsciifierInputValidator, warn if warranted
+    * enhancement: add utf-8 check to AsciifierBase, warn if warranted
     * feature/enhancement: option: disable validation (performance optimization)
     * feature: save and load gif frames to and from files (proprietary format?)
     * feature: allow ImageFilePrinter to reload image file
@@ -37,10 +37,13 @@ from shutil import get_terminal_size
 from time import sleep
 
 
-from .config import CHARS, LOG_FILENAME
+from .config import CHARS, LOG_FILENAME, RESIZE_OPTIONS
 
 
-class AsciifierInputValidator():
+LOGLEVEL = logging.INFO # set this to DEBUG to... well...
+
+
+class AsciifierBase():
     """
     contains input validation functions
     shared between Cell and ImageFilePrinter classes.
@@ -62,15 +65,15 @@ class AsciifierInputValidator():
         if not isinstance(chars, list):
             error_t = TypeError
             error_message = f'chars parameter must be a list, but {__class__} '\
-                'received {type(chars)}'
+                f'received {type(chars)}'
 
         elif not len(chars) >= 1:
             error_t = ValueError
             error_message = f'char list must have 1 or more element(s), '\
-                'but {__class__} received {chars}'
+                f'but {__class__} received {chars}'
 
         if error_t is not None:
-            logger.error(message)
+            self.logger.error(message)
             raise TypeError(message)
 
 
@@ -82,12 +85,12 @@ class AsciifierInputValidator():
         May raise a ValueError if either check fails
         """
         if message is None:
-            message = 'param must be an integer > 0, but {self.__class__} '\
-                'received {i_to_check}'
+            message = f'param must be an integer > 0, but {self.__class__} '\
+                f'received {i_to_check}'
         try:
             i_to_check = int(i_to_check)
         except ValueError as e:
-            logger.error(str(e) + message)
+            self.logger.error(str(e) + message)
             raise e  # TODO append message before raising
 
         if not i_to_check > 0:
@@ -97,13 +100,13 @@ class AsciifierInputValidator():
     def _validate_is_boolean(self, var_to_check, message=None):
         if message is None:
             message = 'parameter must be a boolean, '\
-                'but {self.__class__} received {type(var_to_check)}'
+                f'but {self.__class__} received {type(var_to_check)}'
         if not isinstance(var_to_check, bool):
-            logger.error(message)
+            self.logger.error(message)
             raise TypeError(message)
 
 
-class Cell(AsciifierInputValidator):
+class Cell(AsciifierBase):
     """
     The intended public interface for this class is:
     * instantiation with at least a tuple of (r, g, b, a) integers,
@@ -133,6 +136,7 @@ class Cell(AsciifierInputValidator):
             characters that will be selected from, intended to be ordered 
             from least to most visible when printed to a terminal
         """
+
         if chars is None:
             chars = CHARS
         self._validate_char_list(chars)
@@ -173,18 +177,18 @@ class Cell(AsciifierInputValidator):
         if not isinstance(pixel, tuple):
             error_t = TypeError
             error_message = f'pixel parameter must be a tuple, but '\
-                '{__class__} received a {type(pixel)}'
+                f'{__class__} received a {type(pixel)}'
         elif not len(pixel) == 4:
             error_t = ValueError
             error_message = f'pixel parameter must have 4 members, but '\
-                '{__class__} received {len(pixel)}'
+                f'{__class__} received {len(pixel)}'
         elif not all(map(lambda el: 0 <= el and el <= 255, pixel)):
             error_t = ValueError
             error_message = f'pixel parameter elements must each be an '\
-                'integer >=0 and <=255, but {__class__} received {pixel}'
+                f'integer >=0 and <=255, but {__class__} received {pixel}'
 
         if error_t is not None:
-            logger.error(message)
+            self.logger.error(message)
             raise TypeError(message)
 
 
@@ -222,38 +226,39 @@ class Cell(AsciifierInputValidator):
         return char
 
 
-class ImageFilePrinter(AsciifierInputValidator):
+class ImageFilePrinter(AsciifierBase):
     """
     The intended public interface for this class is
     * Instantiation with at least an image path, the image to turn into text
-      ImageFilePrinter('/path/to/image.png') -> <ImageFilePrinter>
-    * After instantiation, calling ImageFilePrinter.save_text(path) will
-      dump output to a file at path
-    * After instantiation, calling ImageFilePrinter.print_text() will
-      dump output to stdout.
+      ImageFilePrinter('/path/to/image.png') -> <ImageFilePrinter>.
+      Images are loaded into memory and converted to text output
+      on object initialization.
+    * Calling ImageFilePrinter.save_text(path) will
+      dump text output to a file at path.
+    * Calling ImageFilePrinter.print_text() will
+      dump text output to stdout.
+    * Calling unload_image() will unload the Image object from memory,
+      but will NOT unload stored text output.
+    * Calling load_image() will load the Image object back into memory
+      from the file at self.image_path and re-generate text output.
+
+    Manipulating attributes in any other way is unsupported, at least for now.
+    Dynamic changes to max_height and max_width, etc., are likely to be
+    supported in the future.
 
     a couple of important pieces of state:
-    * self.image_object may be an artifact of when I was implementing animated
-      gif support, should probably be refactored out, TODO
-    * self.image_to_dump holds the PIL.Image after RGBA conversion and resizing.
-      This gets re-used for each frame when handling animated gifs;
-      unsure of whether this will be a curse or a blessing when I go to
-      implement dumping/loading animated gif frames to/from files.
-      This should only be built once per image or once per frame for animations.
-    * self.output holds the string to dump to stdout or file.
-      It should only be built once, when either print_text or save_text
-      are called. Subsequent calls to these functions reuse the built output.
+    * self.image_object is currently held in memory for the lifetime of the
+      object unless self.unload_image() is called by consumer code.
+      Text output is NOT unloaded by this function, so consumer code can
+      safely unload the heavy image_object and continue to dump text freely.
+    * self.output holds the string to dump to stdout or file for static images.
+      It is built when an image is loaded, on initialization or otherwise.
+      ! The exception here is that animations will update this attribute as
+        the object converts frames into strings to dump. Only the most recently
+        converted frame is stored in this attr (NOT the most recently dumped).
+    * self.frames is like self.output except it stores a list, with one element
+      for each asciified frame in the last animated image that was loaded.
     """
-
-    # for validation
-    resize_options = {  # input param: (PIL param, readable name)
-        'n': (Image.NEAREST, 'nearest neighbor'),
-        'lz': (Image.LANCZOS, 'Lanczos'),
-        'bl': (Image.BILINEAR, 'bilinear interpolation'),
-        'bc': (Image.BICUBIC, 'bicubic interpolation'),
-        'x': (Image.BOX, 'box'),
-        'h': (Image.HAMMING, 'Hamming')
-    }
 
 
     def __init__(self, image_path, max_height=None, max_width=None,
@@ -280,49 +285,51 @@ class ImageFilePrinter(AsciifierInputValidator):
             it takes to perform the output i.e. actual delay between frames
             may be longer depending on output dimensions, hardware, terminal
             emulator, etc.
-        :param logfile: str, path to write log to. Currently, logs rotate
-            with a max size of 10 MB and 2 backups. This is subject to change.
-            Defaults to package_directory/asciifier.log.
         """
+        self.logger = None
         if logfile is None:
             logfile = path.join(path.dirname(__file__), '..', LOG_FILENAME)
-        self._validate_can_write_file(logfile)
+        self._validate_can_write_file(logfile, log=False)
         self.logger = self._initialize_logger(logfile)
+
+        self.image_object = None
+        self.output = None
+        self.frames = []
+
+        type_check_message = '{} must be a {}, '\
+            + f'but {self.__class__} received a' + '{}'
 
         self._validate_char_list(chars)
         self.chars = chars
         self.intervals = [255/len(CHARS)*i for i in range(len(CHARS)-1, -1, -1)]
 
-        self._validate_can_read_file(image_path)
+        # validated in load_image
         self.image_path = image_path
 
-        valid_resize_methods = [val[0] for val in self.resize_options.values()]
+        valid_resize_methods = [val[0] for val in RESIZE_OPTIONS.values()]
+        valid_resize_names = [val[0] for val in RESIZE_OPTIONS.values()]
         if resize_method not in valid_resize_methods:
-            message = 'Invalid resize method: {resize_method}'
-            logger.error(message)
+            message = f'Invalid resize method: {resize_method}\n'\
+                f'options are {zip(valid_resize_methods, valid_resize_names)}'
+            self.logger.error(message)
             raise ValueError(message)
         self.resize_method = resize_method
 
-        self._validate_is_boolean(char_by_brightness,
-            'char_by_brightness must be a boolean, '
-            'but {self.__class__} received {type(var_to_check)}')
-        self.char_by_brightness = char_by_brightness
-
         if animate != 0:
             self._validate_positive_nonzero_int(animate,
-                'animate parameter must be a non-negative integer, but '
-                f'{__class__} received {animate}')
+                type_check_message.format(
+                    'animate', 'non-negative integer', type(animate)))
         self.animate = animate
 
-        self._validate_is_boolean(loop_infinitely,
-            'loop_infinitely must be a boolean, '
-            'but {self.__class__} received {type(loop_infinitely)}')
-        self.loop_infinitely = loop_infinitely
+        self._validate_is_boolean(char_by_brightness,
+            type_check_message.format(
+                'char_by_brightness', 'boolean', type(char_by_brightness)))
+        self.char_by_brightness = char_by_brightness
 
-        self.image_object = None
-        self.image_to_dump = None
-        self.output = None
-        self.frames = []
+        self._validate_is_boolean(loop_infinitely,
+            type_check_message.format(
+                'loop_infinitely', 'boolean', type(loop_infinitely)))
+        self.loop_infinitely = loop_infinitely
 
         self.logger.info(f'reading image file {image_path}')
         self.logger.debug(f'working with these chars: {self.chars} '
@@ -339,11 +346,12 @@ class ImageFilePrinter(AsciifierInputValidator):
             # assume a terminal character is about twice as tall as it is wide
             self.max_width = get_terminal_size().columns // 2
         self._validate_dimensions(self.max_height, self.max_width)
-        try:
-            self.image_object = Image.open(image_path)
-        except Exception as e:
-            logger.critical(e)
-            raise e
+        self.load_image()  # loads image into memory
+        self.generate_output()  # converts self.image_object to string output
+        self.unload_image()  # removes self.image_object from memory
+        # I'm leaving these in as a public interface for now, TBD
+        # whether this is a good idea before merging to main TODO
+        # also TODO tests
 
 
     def print_text(self):
@@ -351,8 +359,6 @@ class ImageFilePrinter(AsciifierInputValidator):
         If self.animate is set,
         pass ALL responsibility to self._print_animated.
         Else, 
-        if static output has not already been generated, generate it
-        (according to self.max_width/self.max_height).
         Dump static output to stdout.
         """
         # checks for windows internally
@@ -362,10 +368,6 @@ class ImageFilePrinter(AsciifierInputValidator):
             self._print_animated()
 
         else:
-            if self.output is None:
-                self._generate_output_str(
-                    self._prepare_for_dump(
-                        self.image_object))
             self.logger.info(f'dumping {len(self.output)} chars derived from '
                 f'{self.image_path} to stdout')
             print(self.output)
@@ -373,42 +375,23 @@ class ImageFilePrinter(AsciifierInputValidator):
 
     def _print_animated(self):
         """
-        If we haven't already generated text frames from the input .gif, do so.
-            ^ TODO - thread this part! ^
-        Then, print each frame to stdout in a loop,
+        Print each frame to stdout in a loop,
         forever if self.loop_infinitely... TODO a duration might be a nice option?
         """
-        image = self.image_object
-        if not self.frames:
-            self.logger.info(f'Processing frames from {self.image_path}...')
-            while True:
-                self.logger.debug(f'Processing frame {image.tell()}')
-                image_frame = self._prepare_for_dump(image)
-                # as a side effect, this will update self.output, but
-                # I don't think this matters... should boil down to
-                # just a few simple instructions per frame, once on load,
-                # O(n)
-                self.frames.append(self._generate_output_str(image_frame))
-                try:
-                    image.seek(image.tell() + 1)
-                except EOFError:
-                    self.logger.debug(f'No more frames to process from image')
-                    break
         done = False
         frame_interval = self.animate / 1000.0
         self.logger.info(f'dumping animated image {self.image_path} to stdout '
             f'with {frame_interval}s between frames')
         while not done:
-            # super important to minimize overhead in this for loop...
+            # important to minimize overhead in this for loop...
             # maybe a good idea to write this in C?
             for text_frame in self.frames:
                 #self.logger.debug(f'dumping {len(text_frame)} chars derived '
-                    #'from {self.image_path} to stdout')
+                    #f'from {self.image_path} to stdout')
                 # note that frames seem to have inconsistent char len??
                 print(text_frame)
                 sleep(frame_interval)
             if not self.loop_infinitely:
-                image.seek(0)
                 done = True
 
 
@@ -419,8 +402,6 @@ class ImageFilePrinter(AsciifierInputValidator):
         pass ALL responsibility to self._save_animated,
         which is not yet implemented... so does nothing.
         Else, 
-        if static output has not already been generated, generate it
-        (according to self.max_width/self.max_height).
         Dump static output to filepath.
         """
         self._validate_can_write_file(filepath)
@@ -429,10 +410,6 @@ class ImageFilePrinter(AsciifierInputValidator):
             self.logger.error(
                 f'Saving animated GIF frames to file not yet supported')
         else:
-            if self.output is None:
-                self._generate_output_str(
-                    self._prepare_for_dump(
-                        self.image_object))
             self.logger.info(f'dumping {len(self.output)} chars derived from '
                 f'{self.image_path} to {filepath}')
             self._save_file(filepath)
@@ -449,33 +426,61 @@ class ImageFilePrinter(AsciifierInputValidator):
                 wf.write(c)
 
 
-    def _initialize_logger(self, logpath):
+    def load_image(self):
+        self._validate_can_read_file(self.image_path)
+        try:
+            # TODO handle DecompressionBombWarning for large images
+            # this holds the file descriptor open for the lifetime of
+            # the object afaik, which is necessary for seeks.
+            # I tried using with & Image.load in order to close the
+            # FD once the data is in memory, but it caused a weird bug
+            # with animated gifs...
+            # there's no way this is a pillow bug, but it sure seems like
+            # one at 2:30 AM.
+            self.image_object = Image.open(self.image_path, 'r')
+            #with Image.open(self.image_path, 'r') as image:
+                #image.load()
+                #self.image_object = image
+        except Exception as e:
+            self.logger.critical(e)
+            raise e
+
+
+    def generate_output(self):
+        if self.animate:
+            self.frames = self._convert_animation_to_frames()
+        else:
+            self.output = self._convert_image_to_string(
+                self._prepare_for_dump(self.image_object))
+
+
+    def unload_image(self):
         """
-        By default,
-        logs to file at logpath with severity INFO or greater,
-        logs to stdout with severity ERROR or greater.
-        logpath was validated in init.
+        dellocates image object, but not the text output it generated
         """
-        logger = logging.getLogger(__name__)
-        logger.setLevel(logging.INFO)
+        self.image_object = None
 
-        log_formatter = logging.Formatter(
-            '%(asctime)s;%(levelname)s;%(message)s')
 
-        log_file_handler = RotatingFileHandler(
-            filename=logpath,
-            maxBytes=10000000,  # 10 MB
-            backupCount=2)
-        log_file_handler.setFormatter(log_formatter)
+    def _convert_animation_to_frames(self):
+        self.logger.info(f'Processing frames from {self.image_path}...')
+        ret = []
 
-        log_stdout_handler = logging.StreamHandler()
-        log_stdout_handler.setLevel(logging.ERROR)
-        log_stdout_handler.setFormatter(log_formatter)
+        while True:
+            self.logger.debug(f'Processing frame {self.image_object.tell()}')
+            # must be done per-seek
+            image_frame = self._prepare_for_dump(self.image_object)
+            # as a side effect, this will update self.output, but
+            # I don't think this matters much
+            ret.append(self._convert_image_to_string(image_frame))
 
-        logger.addHandler(log_file_handler)
-        logger.addHandler(log_stdout_handler)
+            try:
+                self.image_object.seek(self.image_object.tell() + 1)
+            except EOFError:  # TODO use n frames from image_object
+                self.logger.debug(f'No more frames to process from image')
+                self.image_object.seek(0)
+                break
 
-        return logger
+        return ret
 
 
     def _prepare_for_dump(self, image):
@@ -493,7 +498,7 @@ class ImageFilePrinter(AsciifierInputValidator):
         return image
 
 
-    def _generate_output_str(self, image):
+    def _convert_image_to_string(self, image):
         """
         Intent is that this should be the ONLY place self.output is assigned to.
         Call this when you need to dump output chars, but self.output is None;
@@ -512,6 +517,7 @@ class ImageFilePrinter(AsciifierInputValidator):
             output += '\n'
 
         self.output = output
+        self.logger.debug(f'done converting {image}')
         return output
 
 
@@ -551,7 +557,19 @@ class ImageFilePrinter(AsciifierInputValidator):
             raise error_t(error_message)
 
 
-    def _validate_can_write_file(self, filepath):
+    def _validate_dimensions(self, max_height, max_width):
+        """
+        For each dimension, checks:
+        1. dimension is an integer
+        2. dimension is > 0
+        May raise a ValueError if either check fails
+        """
+        for dim in (max_height, max_width):
+            self._validate_positive_nonzero_int(dim, 'requested dimension must '
+                f'be an integer > 0, but {__class__} received {dim}')
+
+
+    def _validate_can_write_file(self, filepath, log=True):
         """
         checks three conditions:
         1. filepath's parent directory exists
@@ -566,7 +584,8 @@ class ImageFilePrinter(AsciifierInputValidator):
         try:
             filepath = path.abspath(filepath)
         except TypeError as e:
-            self.logger.error(e)
+            if log:
+                self.logger.error(e)
             raise e
         parent_dir = path.dirname(filepath)
 
@@ -584,18 +603,37 @@ class ImageFilePrinter(AsciifierInputValidator):
                 'insufficient permissions'
 
         if error_t is not None:
-            self.logger.error(error_message)
+            if log:
+                self.logger.error(error_message)
             raise error_t(error_message)
 
 
-    def _validate_dimensions(self, max_height, max_width):
+    @staticmethod
+    def _initialize_logger(logpath):
         """
-        For each dimension, checks:
-        1. dimension is an integer
-        2. dimension is > 0
-        May raise a ValueError if either check fails
+        By default,
+        logs to file at logpath with severity INFO or greater,
+        logs to stdout with severity ERROR or greater.
+        logpath was validated in init.
         """
-        for dim in (max_height, max_width):
-            self._validate_positive_nonzero_int(dim, 'requested dimension must '
-                'be an integer > 0, but {__class__} received {dim}')
+        logger = logging.getLogger(__name__)
+        logger.setLevel(LOGLEVEL)  
+
+        log_formatter = logging.Formatter(
+            '%(asctime)s;%(levelname)s;%(message)s')
+
+        log_file_handler = RotatingFileHandler(
+            filename=logpath,
+            maxBytes=10000000,  # 10 MB
+            backupCount=2)
+        log_file_handler.setFormatter(log_formatter)
+
+        log_stdout_handler = logging.StreamHandler()
+        log_stdout_handler.setLevel(logging.ERROR)
+        log_stdout_handler.setFormatter(log_formatter)
+
+        logger.addHandler(log_file_handler)
+        logger.addHandler(log_stdout_handler)
+
+        return logger
 

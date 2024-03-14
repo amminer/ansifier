@@ -47,6 +47,7 @@ def test_can_run_animation_on_gif():
 
     printer.print_text()
 
+
 def test_negative_must_pass_image_path():
     """ ensure that you can't instantiate without a path """
     error_message = "missing 1 required positional argument: 'image_path'"

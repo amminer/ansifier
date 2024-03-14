@@ -3,16 +3,12 @@
 
 import argparse
 
-from logging import DEBUG
 from sys import exit
 
 
-import src.config as config
+from src.config import CHARS, RESIZE_OPTIONS
 
 from src.image_printer import ImageFilePrinter
-
-
-CHARS = config.CHARS
 
 
 if __name__ == "__main__":
@@ -59,7 +55,7 @@ if __name__ == "__main__":
                 #f'Available chars are: {CHARS}')
 
     readable_resize_options = {(k, v[1]) for k, v in 
-        ImageFilePrinter.resize_options.items()}
+        RESIZE_OPTIONS.items()}
     argparser.add_argument('-r', '--resize-method', action='store', type=str,
         required=False, default='lz', help='algorithm used for resampling '
             'image to desired output dimensions. Defaults to "lz", Lanczos, '
@@ -93,10 +89,6 @@ if __name__ == "__main__":
             '(--char-by-brightness) on char selection; useful for images with '
             'dark foregrounds and bright backgrounds, for example')
 
-    argparser.add_argument('-d', '--debug', action='store_true',
-        required=False, default=False,
-        help='reduce output dims, print helpful info')
-
     # TODO not a bad idea but surprisingly not working?
     #argparser.add_argument('-w', '--no-whitespace', action='store_true',
         #required=False, default=False,
@@ -108,7 +100,7 @@ if __name__ == "__main__":
 
     resize_method = None
     try:
-        resize_method = ImageFilePrinter.resize_options[args.resize_method][0]
+        resize_method = RESIZE_OPTIONS[args.resize_method][0]
     except KeyError:
         print('error: bad value passed to resize_method switch; '
             f'see `{__file__} -h`.')
@@ -149,8 +141,6 @@ if __name__ == "__main__":
         CHARS,
         args.animate,
         args.loop_infinitely)
-    if args.debug:
-        image_printer.logger.setLevel(DEBUG)
 
     image_printer.print_text()
 
