@@ -25,7 +25,10 @@ TODO/ideas for improvements not yet made into GitHub issues:
 
 import logging
 from logging.handlers import RotatingFileHandler
-import pillow_avif  # not ref'd in code, but pillow uses this to support avif
+try:
+    import pillow_avif  # not ref'd in code, pillow uses this to support avif
+except ImportError:  # not readily available via apt afaik, I wanna run w/o venv
+    pass # log warning? eh
 
 from PIL import Image
 from colorama import just_fix_windows_console
