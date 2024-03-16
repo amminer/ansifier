@@ -368,9 +368,10 @@ class ImageFilePrinter(AsciifierBase):
             self._print_animated()
 
         else:
-            self.logger.info(f'dumping {len(self.output)} chars derived from '
+            rows = len(self.output.split("\n"))
+            self.logger.info(f'dumping {len(self.output)} chars in {rows} rows derived from '
                 f'{self.image_path} to stdout')
-            print(self.output)
+            print(self.output, end='')
 
 
     def _print_animated(self):
