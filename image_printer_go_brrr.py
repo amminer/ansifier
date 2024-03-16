@@ -7,7 +7,7 @@ from sys import exit
 from shutil import get_terminal_size
 
 from src.config import CHARS, RESIZE_OPTIONS
-from src.image_printer import ImageFilePrinter
+from src.image_printer import ImageFilePrinter, length_after_processing
 
 
 if __name__ == "__main__":
@@ -146,10 +146,12 @@ if __name__ == "__main__":
         args.animate,
         args.loop_infinitely)
 
-    if args.center_horizontally:
-        width = get_terminal_size()[1]
+    width = get_terminal_size().columns
+    line_len = length_after_processing(image_printer.output.split('\n')[0])
+    if args.center_horizontally and width > line_len+1:
         image_printer.output = '\n'.join(
-            [' ' * width + l for l in image_printer.output.split('\n')][:-1])
+            [' ' * ((width - line_len) // 2) + l\
+            for l in image_printer.output.split('\n')][:-1])
         image_printer.output += '\n'
     image_printer.print_text()
 

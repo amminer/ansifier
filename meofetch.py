@@ -17,6 +17,9 @@ import subprocess
 from shutil import get_terminal_size
 from sys import argv, path
 
+from src.config import CHARS, RESIZE_OPTIONS
+from src.image_printer import ImageFilePrinter, length_after_processing
+
 
 # TODO flesh this out, give it more arguments,
 #  maybe its own repo which might be an insane idea
@@ -66,13 +69,7 @@ w = (w_orig - max(list(map(length_after_processing, sysinfo_lines)))) // 2 - 6
 if w > 0 and h > 0:
 # the .output attr was not originally intended as a public interface,
 #  but it sure works as one
-#from src.image_printer import ImageFilePrinter
-#from asciifier import ImageFilePrinter
-# That won't work until packaging is complete, so this works for now instead on my system,
-#  at least for prototyping
-#ascii_art = ImageFilePrinter(image_path, max_width=w, max_height=h).output
-    ascii_art = subprocess.check_output(
-        ['imgprint', '/home/meelz/Pictures/meofetch-art.png', f'-W{w}', f'-H{h}']).decode('UTF-8')
+    ascii_art = ImageFilePrinter(image_path, max_width=w, max_height=h).output
     ascii_lines = ascii_art.split('\n')[:-1]
     max_ascii_line_len = max(list(map(length_after_processing, ascii_lines)))
 # pad left

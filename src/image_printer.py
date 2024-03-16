@@ -2,14 +2,7 @@
 Main purpose of this file is to expose class ImageFilePrinter for consumption
 
 TODO/ideas for improvements not yet made into GitHub issues:
-    * enhancement: refactor ImageFilePrinter to manage its memory better
-        (only keep image file in memory while it absolutely has to be);
-        as of right now, the image file stays in memory for the lifetime
-        of the ImageFilePrinter object.
-        This entails significant structural changes to the class!
-        * This will also be an opportunity to refine reusability of instances.
-           You should be able to resize the maximum dimensions, reload the image
-           file/regenerate the output string, etc.
+    * ENHANCEMENT: Minimize output chars; only change color when you need to
     * enhancement: add a docstring here
     * enhancement: generalize a wrapper for _validate functions to dry code out
     * enhancement: more robust tests that valid inputs work
@@ -29,6 +22,7 @@ try:
     import pillow_avif  # not ref'd in code, pillow uses this to support avif
 except ImportError:  # not readily available via apt afaik, I wanna run w/o venv
     pass # log warning? eh
+import re
 
 from PIL import Image
 from colorama import just_fix_windows_console
@@ -41,6 +35,18 @@ from .config import CHARS, LOG_FILENAME, RESIZE_OPTIONS
 
 
 LOGLEVEL = logging.INFO # set this to DEBUG to... well...
+
+
+# A couple of useful utility functions for hacking up ImageFilePrinter.output
+#  post-generation
+
+def remove_ansi_escape_sequences(text):
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    return ansi_escape.sub('', text)
+
+def length_after_processing(text):
+    processed_text = remove_ansi_escape_sequences(text)
+    return len(processed_text)
 
 
 class AsciifierBase():
