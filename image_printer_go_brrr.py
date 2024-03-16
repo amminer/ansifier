@@ -4,10 +4,9 @@
 import argparse
 
 from sys import exit
-
+from shutil import get_terminal_size
 
 from src.config import CHARS, RESIZE_OPTIONS
-
 from src.image_printer import ImageFilePrinter
 
 
@@ -89,6 +88,11 @@ if __name__ == "__main__":
             '(--char-by-brightness) on char selection; useful for images with '
             'dark foregrounds and bright backgrounds, for example')
 
+    argparser.add_argument('-z', '--center-horizontally', action='store_true',
+        required=False, default=False,
+        help='Use terminal size to center output horizontally. Only affects '
+            'stdout, does not affect saved file contents if any')
+
     # TODO not a bad idea but surprisingly not working?
     #argparser.add_argument('-w', '--no-whitespace', action='store_true',
         #required=False, default=False,
@@ -142,6 +146,11 @@ if __name__ == "__main__":
         args.animate,
         args.loop_infinitely)
 
+    if args.center_horizontally:
+        width = get_terminal_size()[1]
+        image_printer.output = '\n'.join(
+            [' ' * width + l for l in image_printer.output.split('\n')][:-1])
+        image_printer.output += '\n'
     image_printer.print_text()
 
     if args.save_to_file:
