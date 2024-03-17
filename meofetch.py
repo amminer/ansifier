@@ -2,11 +2,15 @@
 
 
 """
-A scrappy, hacked up little script, at least for now.
+See -h
+A bit of a scrappy, hacked up little script, at least for now.
 * Steals output from neofetch --off
-* generates ascii art from the image whose path is passed as
-  the first command line argument, takes terminal size into account
-* combines these outputs into my own strange fetch and prints it
+* generates ascii art from the image, takes terminal size into account
+* combines these outputs and prints it all
+
+# TODO XDG_CONFIG
+image printed defaults to $HOME/Pictures/meofetch-art.png;
+if this image does not exist and no alternative is passed to the command, exits
 """
 
 
@@ -22,6 +26,9 @@ from src.config import CHARS, RESIZE_OPTIONS
 from src.image_printer import ImageFilePrinter, length_after_processing
 
 
+homedir = os.environ['HOME']
+# TODO XDG_CONFIG
+DEFAULT_IMAGE_PATH = str(os.path.join(homedir, 'Pictures/meofetch-art.png'))
 # TODO flesh these args out and work them into the ones from get_parser
 LEFT_PADDING = -1  # -1 for center
 #LEFT_PADDING = 8  # more traditional
@@ -62,14 +69,16 @@ parser = get_parser()
 # hack up the internal optiosn for now TODO parser subclass?
 image_path_action = [a for a in parser._actions if a.dest == 'image_path'][0]
 image_path_action.required = False
-homedir = os.environ['HOME']
-image_path_action.default = str(os.path.join(homedir, 'Pictures/meofetch-art.png'))  # TODO config
+image_path_action.default = DEFAULT_IMAGE_PATH
 for helparg in parser._actions[0].option_strings:
     if helparg in argv:
         print('meofetch takes output from the script below and interleaves it '
             'with neofetch system info, with some padding.\n'
             'if the terminal isn\'t large enough, neofetch lines may be '
             'trimmed from the bottom, and/or the ascii image may not display.\n'
+            'Note that if no image file is provided, meofetch defaults to use '
+            '$HOME/Pictures/meofetch-art.png. If $HOME is undefined and no '
+            'path is provided, meofetch will not work.'  # TODO XDG_CONFIG
             'Note that using --center-horizontally in this context is '
             'discouraged.\n'
             'Finally, note that --max-width and --max-height may only reduce '
@@ -78,6 +87,9 @@ for helparg in parser._actions[0].option_strings:
 if w > 0 and h > 0:
 
     args = parser.parse_args()
+    if not args.image_path and not os.environ['HOME']:
+        print('No image path provided and HOME env var not defined, see meofetch -h')
+        exit(1)
     if args.max_width is not None:
         args.max_width = min(args.max_width, w)
     else:
