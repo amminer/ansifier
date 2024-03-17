@@ -78,7 +78,8 @@ for helparg in parser._actions[0].option_strings:
             'trimmed from the bottom, and/or the ascii image may not display.\n'
             'Note that if no image file is provided, meofetch defaults to use '
             '$HOME/Pictures/meofetch-art.png. If $HOME is undefined and no '
-            'path is provided, meofetch will not work.'  # TODO XDG_CONFIG
+            'path is provided, meofetch will not work.\n'  # TODO XDG_CONFIG
+            'Note that the --animate option has no affect here.'
             'Note that using --center-horizontally in this context is '
             'discouraged.\n'
             'Finally, note that --max-width and --max-height may only reduce '
@@ -87,13 +88,18 @@ for helparg in parser._actions[0].option_strings:
 if w > 0 and h > 0:
 
     args = parser.parse_args()
+
     if not args.image_path and not os.environ['HOME']:
         print('No image path provided and HOME env var not defined, see meofetch -h')
         exit(1)
+
+    args.animate = 0
+
     if args.max_width is not None:
         args.max_width = min(args.max_width, w)
     else:
         args.max_width = w
+
     if args.max_height is not None:
         args.max_height = min(args.max_height, h) if args.max_width is not None else h
     else:
