@@ -10,16 +10,92 @@ from src.config import CHARS, RESIZE_OPTIONS
 from src.image_printer import ImageFilePrinter, length_after_processing
 
 
-if __name__ == "__main__":
+def run_cli(args=None):
     """
-    set up and parse args,
-    interpret args,
-    call main
+    Instantiates an ImageFilePrinter using argv
+    calls print_text()
+    may save to file if instructed
+    see image_printer_go_brrr.py -h
     """
+    global CHARS
+    global RESIZE_OPTIONS
     NUM_CHARS = len(CHARS)
-    cell_warning = 'note that a cell is roughly square, i.e. it is '\
-        '2 terminal characters wide and 1 terminal character tall.'
 
+    if args is None:
+        args = get_args()
+    
+    resize_method = None
+    try:
+        resize_method = RESIZE_OPTIONS[args.resize_method][0]
+    except KeyError:
+        print('error: bad value passed to resize_method switch; '
+            f'see `{__file__} -h`.')
+        exit(1)
+    limit = args.limit_high_chars
+    negative_limit = args.limit_low_chars
+    #offset = args.char_offset
+
+    if limit + negative_limit >= NUM_CHARS - 1:
+        print(f'error: total of character limit arguments must be < '
+            f'{NUM_CHARS-1} to get any visible output; see `{__file__} -h`.')
+        exit(1)
+    CHARS = CHARS[limit:]
+    if negative_limit != 0:
+        CHARS = CHARS[:-1*negative_limit - 1]
+        CHARS.append(' ')
+    if args.invert:
+        CHARS = CHARS[-1::-1]
+    #if args.no_whitespace:
+        #CHARS.remove(' ')
+    #INTERVALS = [255/len(CHARS)*i for i in range(len(CHARS)-1, -1, -1)]
+    #if offset != 0:
+        #INTERVALS = [i+INTERVALS[-1 - offset] for i in INTERVALS]
+        #new_offset_addition = INTERVALS[-1*offset]
+        #for i, interval in enumerate(INTERVALS):
+            #print(f'offset of {offset} adds {new_offset_addition} to {interval}')
+            #new_interval = interval+new_offset_addition
+            #if new_interval <= 255:
+                #INTERVALS[i] = new_interval
+    #main(args.imageFilePath, args.max_height, args.max_width)
+
+    image_printer = ImageFilePrinter(
+        args.image_path,
+        args.max_height,
+        args.max_width,
+        resize_method,
+        args.char_by_brightness,
+        CHARS,
+        args.animate,
+        args.loop_infinitely)
+
+    sz = get_terminal_size()
+    width = sz.columns
+    height = sz.lines
+    line_len = length_after_processing(image_printer.output.split('\n')[0])
+
+    if args.center_horizontally and width > line_len+1:
+        image_printer.output = '\n'.join(
+            [' ' * ((width - line_len) // 2) + l\
+            for l in image_printer.output.split('\n')][:-1])
+        image_printer.output += '\n'
+
+    num_lines = len(image_printer.output.split('\n'))
+    if args.center_vertically and height > num_lines:
+        difference = height - num_lines
+        pad_num = difference // 2 + 1
+        pad = ' ' * line_len + '\n'
+        image_printer.output = pad*pad_num + image_printer.output + pad*pad_num
+
+    
+    if args.save_to_file:
+        image_printer.save_text(args.save_to_file)
+
+    return image_printer
+
+
+def get_parser():
+    cell_info_message = 'note that a cell is roughly square, i.e. it is '\
+        '2 terminal characters wide and 1 terminal character tall.'
     argparser = argparse.ArgumentParser(
         description='In its most basic usage, takes an image file as input and '
         'prints a unicode representation of the image to the terminal, using '
@@ -30,11 +106,11 @@ if __name__ == "__main__":
 
     argparser.add_argument('-H', '--max-height', action='store', type=int,
         required=False, default=None,
-        help='Restrict output to this many rows at most; ' + cell_warning)
+        help='Restrict output to this many rows at most; ' + cell_info_message)
 
     argparser.add_argument('-W', '--max-width', action='store', type=int,
         required=False, default=None,
-        help='Restrict output to this many columns at most; ' + cell_warning)
+        help='Restrict output to this many columns at most; ' + cell_info_message)
 
     argparser.add_argument('-c', '--limit-high-chars', action='store', type=int,
         required=False, default=0, help='remove <arg> chars from high (opaque) '
@@ -91,7 +167,14 @@ if __name__ == "__main__":
     argparser.add_argument('-z', '--center-horizontally', action='store_true',
         required=False, default=False,
         help='Use terminal size to center output horizontally. Only affects '
-            'stdout, does not affect saved file contents if any')
+            'stdout, does not affect saved file contents if any, does not '
+            'work on animated gifs')
+
+    argparser.add_argument('-v', '--center-vertically', action='store_true',
+        required=False, default=False,
+        help='Use terminal size to center output vertically. Only affects '
+            'stdout, does not affect saved file contents if any, does not '
+            'work on animated gifs')
 
     # TODO not a bad idea but surprisingly not working?
     #argparser.add_argument('-w', '--no-whitespace', action='store_true',
@@ -100,64 +183,18 @@ if __name__ == "__main__":
             #'(completely transparent blocks) in output.')
 
     argparser.add_argument('image_path')
+
+    return argparser
+
+
+def get_args():
+    """ returns an argparser.args """
+    argparser = get_parser()
     args = argparser.parse_args()
+    return args
 
-    resize_method = None
-    try:
-        resize_method = RESIZE_OPTIONS[args.resize_method][0]
-    except KeyError:
-        print('error: bad value passed to resize_method switch; '
-            f'see `{__file__} -h`.')
-        exit(1)
-    limit = args.limit_high_chars
-    negative_limit = args.limit_low_chars
-    #offset = args.char_offset
 
-    if limit + negative_limit >= NUM_CHARS - 1:
-        print(f'error: total of character limit arguments must be < '
-            f'{NUM_CHARS-1} to get any visible output; see `{__file__} -h`.')
-        exit(1)
-    CHARS = CHARS[limit:]
-    if negative_limit != 0:
-        CHARS = CHARS[:-1*negative_limit - 1]
-        CHARS.append(' ')
-    if args.invert:
-        CHARS = CHARS[-1::-1]
-    #if args.no_whitespace:
-        #CHARS.remove(' ')
-    #INTERVALS = [255/len(CHARS)*i for i in range(len(CHARS)-1, -1, -1)]
-    #if offset != 0:
-        #INTERVALS = [i+INTERVALS[-1 - offset] for i in INTERVALS]
-        #new_offset_addition = INTERVALS[-1*offset]
-        #for i, interval in enumerate(INTERVALS):
-            #print(f'offset of {offset} adds {new_offset_addition} to {interval}')
-            #new_interval = interval+new_offset_addition
-            #if new_interval <= 255:
-                #INTERVALS[i] = new_interval
-    #main(args.imageFilePath, args.max_height, args.max_width)
-
-    image_printer = ImageFilePrinter(
-        args.image_path,
-        args.max_height,
-        args.max_width,
-        resize_method,
-        args.char_by_brightness,
-        CHARS,
-        args.animate,
-        args.loop_infinitely)
-
-    width = get_terminal_size().columns
-    line_len = length_after_processing(image_printer.output.split('\n')[0])
-    if args.center_horizontally and width > line_len+1:
-        image_printer.output = '\n'.join(
-            [' ' * ((width - line_len) // 2) + l\
-            for l in image_printer.output.split('\n')][:-1])
-        image_printer.output += '\n'
+if __name__ == "__main__":
+    image_printer = run_cli()
     image_printer.print_text()
-
-    if args.save_to_file:
-        image_printer.save_text(args.save_to_file)
-else:
-    print(f'{__file__} is only meant to be invoked as a script (as __main__); '
-        'did you mean to import image_printer.ImageFilePrinter?')
 

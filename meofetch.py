@@ -12,20 +12,17 @@ A scrappy, hacked up little script, at least for now.
 
 import os
 import re
-import subprocess
 
 from shutil import get_terminal_size
 from sys import argv, path
+from subprocess import check_output
+from image_printer_go_brrr import run_cli, get_parser
 
 from src.config import CHARS, RESIZE_OPTIONS
 from src.image_printer import ImageFilePrinter, length_after_processing
 
 
-# TODO flesh this out, give it more arguments,
-#  maybe its own repo which might be an insane idea
-#  like can I really write a fetch that just steals from neofetch?
-#  Should I just fork neofetch so it's separately configurable?
-#  is that even a little bit realistic?
+# TODO flesh these args out and work them into the ones from get_parser
 LEFT_PADDING = -1  # -1 for center
 #LEFT_PADDING = 8  # more traditional
 BETWEEN_PADDING = 7
@@ -46,33 +43,56 @@ w_orig = sz[0]
 h = sz[1] - 1  # prompt
 
 # get output from neofetch
-system_info = subprocess.check_output(['neofetch', '--off']).decode('UTF-8')
+system_info = check_output(['neofetch', '--off']).decode('UTF-8')
 #system_info = os.popen('neofetch --off').read()  # Terminal: meofetch.py lol
 sysinfo_lines = system_info.split('\n')
 sysinfo_lines = [' '*BETWEEN_PADDING + l for l in sysinfo_lines]
 
-# read in a custom image if provided, otherwise the default on the next line
-image_path = '/home/meelz/Pictures/meofetch-art.png'
-try:
-    if argv[1] and os.path.exists(argv[1]):
-        image_path = argv[1]
-except:
-    pass
-
 # take lines off the bottom of neofetch's output until the output will fit in the terminal
 while h < len(sysinfo_lines):
     sysinfo_lines.pop()
+# TODO de-prioritize neofetch lines for screen space vs. ascii art here?
 
 # Account for horizonal room for neofetch output
 w = (w_orig - max(list(map(length_after_processing, sysinfo_lines)))) // 2 - 6
 
+# override this part of the cli
+parser = get_parser()
+# alter help message
+# hack up the internal optiosn for now TODO parser subclass?
+image_path_action = [a for a in parser._actions if a.dest == 'image_path'][0]
+image_path_action.required = False
+homedir = os.environ['HOME']
+image_path_action.default = str(os.path.join(homedir, 'Pictures/meofetch-art.png'))  # TODO config
+for helparg in parser._actions[0].option_strings:
+    if helparg in argv:
+        print('meofetch takes output from the script below and interleaves it '
+            'with neofetch system info, with some padding.\n'
+            'if the terminal isn\'t large enough, neofetch lines may be '
+            'trimmed from the bottom, and/or the ascii image may not display.\n'
+            'Note that using --center-horizontally in this context is '
+            'discouraged.\n'
+            'Finally, note that --max-width and --max-height may only reduce '
+            'the output dimensions from those found based on terminal size.\n')
+
 if w > 0 and h > 0:
-# the .output attr was not originally intended as a public interface,
-#  but it sure works as one
-    ascii_art = ImageFilePrinter(image_path, max_width=w, max_height=h).output
+
+    args = parser.parse_args()
+    if args.max_width is not None:
+        args.max_width = min(args.max_width, w)
+    else:
+        args.max_width = w
+    if args.max_height is not None:
+        args.max_height = min(args.max_height, h) if args.max_width is not None else h
+    else:
+        args.max_height = h
+
+    # the .output attr was not originally intended as a public interface,
+    #  but it sure works as one
+    ascii_art = run_cli(args).output
     ascii_lines = ascii_art.split('\n')[:-1]
     max_ascii_line_len = max(list(map(length_after_processing, ascii_lines)))
-# pad left
+    # pad left
     if LEFT_PADDING != -1:
         ascii_lines = [' '*LEFT_PADDING + line for line in ascii_lines]
     else:  # center ascii output horizontally
@@ -98,6 +118,7 @@ while len(sysinfo_lines) > len(ascii_lines):
     i += 1
 
 # ensure neofetch output is centered when ascii art has more rows
+# TODO this is repeated in image_printer_go_brrr.py almost exactly
 difference = len(ascii_lines) - len(sysinfo_lines) + 2
 pad_num = difference // 2
 pad = [' ' for i in range(pad_num)]
