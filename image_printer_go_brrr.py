@@ -85,8 +85,7 @@ def run_cli(args=None):
         pad_num = difference // 2
         pad_line = ' ' * line_len + '\n'
         pad = pad_line*pad_num
-        if num_lines % 2:
-            image_printer.output = pad_line + image_printer.output
+        image_printer.output = pad_line + image_printer.output
         image_printer.output = pad + image_printer.output + pad
 
     
