@@ -82,9 +82,12 @@ def run_cli(args=None):
     num_lines = len(image_printer.output.split('\n'))
     if args.center_vertically and height > num_lines:
         difference = height - num_lines
-        pad_num = difference // 2 + 1
-        pad = ' ' * line_len + '\n'
-        image_printer.output = pad*pad_num + image_printer.output + pad*pad_num
+        pad_num = difference // 2
+        pad_line = ' ' * line_len + '\n'
+        pad = pad_line*pad_num
+        if num_lines % 2:
+            image_printer.output = pad_line + image_printer.output
+        image_printer.output = pad + image_printer.output + pad
 
     
     if args.save_to_file:
