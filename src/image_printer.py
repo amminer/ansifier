@@ -291,6 +291,8 @@ class ImageFilePrinter(AsciifierBase):
             it takes to perform the output i.e. actual delay between frames
             may be longer depending on output dimensions, hardware, terminal
             emulator, etc.
+            It is advisable to set this value to some factor of your monitor's
+            refresh rate to avoid your monitor catching asciifier mid-print.
         """
         self.logger = None
         if logfile is None:

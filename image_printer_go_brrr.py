@@ -143,7 +143,9 @@ def get_parser():
         required=False, type=int, default=0,
         help='If the input image is animated (.gif), process all keyframes and '
             'print them with ANIMATE milliseconds of delay between frames. '
-            'This option is incompatible with -f.')
+            'This option is incompatible with -f. '
+            'It is advisable to set this value to some factor of your monitor\'s '
+            'refresh rate to avoid your monitor catching asciifier mid-print.')
 
     argparser.add_argument('-f', '--save-to-file', action='store', type=str,
         required=False, default=None, help='Write output to a file. '
