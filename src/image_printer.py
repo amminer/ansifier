@@ -23,6 +23,7 @@ try:
 except ImportError:  # not readily available via apt afaik, I wanna run w/o venv
     pass # log warning? eh
 import re
+import sys
 
 from PIL import Image
 from colorama import just_fix_windows_console
@@ -132,6 +133,8 @@ class Cell(AsciifierBase):
         and a reset escape
     """
 
+    reset_escape = "\033[38;2;255;255;255m"
+
     def __init__(self, pixel, from_brightness=False, chars=None):
         """
         :param pixel: tuple, of integers, length 4
@@ -145,10 +148,11 @@ class Cell(AsciifierBase):
 
         if chars is None:
             chars = CHARS
-        self._validate_char_list(chars)
+        #self._validate_char_list(chars)  # TODO how does this affect performance?
         self.chars = chars
         self.intervals = [255/len(self.chars)*i
                           for i in range(len(self.chars)-1, -1, -1)]
+        # (how good is the interpreter at optimizing this? Does it??)
 
         self._validate_pixel(pixel)
         self.pixel = pixel
@@ -158,13 +162,14 @@ class Cell(AsciifierBase):
         g = self.pixel[1]
         b = self.pixel[2]
         self.color_escape = f"\033[38;2;{r};{g};{b}m" 
-        self.reset_escape = "\033[38;2;255;255;255m"
 
 
     def __str__(self):
         # assume a terminal character is about twice as tall as it is wide
-        ret = str(self.color_escape + self.char) * 2\
-            + self.reset_escape  # TODO limit resets?
+        if self.char == ' ':  # no need to color-escape transparent cells
+            ret = self.char * 2
+        else:
+            ret = self.color_escape + self.char * 2
         return ret
 
 
@@ -379,7 +384,10 @@ class ImageFilePrinter(AsciifierBase):
             rows = len(self.output.split("\n"))
             self.logger.info(f'dumping {len(self.output)} chars in {rows} rows derived from '
                 f'{self.image_path} to stdout')
+            #sys.stdout.write(self.output)
+            #sys.stdout.flush()  # TODO this might be marginally faster
             print(self.output, end='')
+        print(Cell.reset_escape)
 
 
     def _print_animated(self):
@@ -398,6 +406,8 @@ class ImageFilePrinter(AsciifierBase):
                 #self.logger.debug(f'dumping {len(text_frame)} chars derived '
                     #f'from {self.image_path} to stdout')
                 # note that frames seem to have inconsistent char len??
+                #sys.stdout.write(text_frame)
+                #sys.stdout.flush()  # TODO this might be marginally faster
                 print(text_frame)
                 sleep(frame_interval)
             if not self.loop_infinitely:
