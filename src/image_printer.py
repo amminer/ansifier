@@ -193,7 +193,8 @@ class Cell(AsciifierBase):
             error_t = ValueError
             error_message = f'pixel parameter must have 4 members, but '\
                 f'{__class__} received {len(pixel)}'
-        elif not all(map(lambda el: 0 <= el and el <= 255, pixel)):
+        elif not all(isinstance(v, int) for v in pixel) \
+         and not all(map(lambda el: 0 <= el and el <= 255, pixel)):
             error_t = ValueError
             error_message = f'pixel parameter elements must each be an '\
                 f'integer >=0 and <=255, but {__class__} received {pixel}'
@@ -250,6 +251,9 @@ class ImageFilePrinter(AsciifierBase):
       dump text output to stdout.
     * Calling unload_image() will unload the Image object from memory,
       but will NOT unload stored text output.
+      Default behavior is to unload the image after output has been generated
+      in init, TODO may add a flag for this to __init__, maybe also for input
+      generation; would enhance extensibility, maybe.
     * Calling load_image() will load the Image object back into memory
       from the file at self.image_path and re-generate text output.
 
@@ -258,10 +262,6 @@ class ImageFilePrinter(AsciifierBase):
     supported in the future.
 
     a couple of important pieces of state:
-    * self.image_object is currently held in memory for the lifetime of the
-      object unless self.unload_image() is called by consumer code.
-      Text output is NOT unloaded by this function, so consumer code can
-      safely unload the heavy image_object and continue to dump text freely.
     * self.output holds the string to dump to stdout or file for static images.
       It is built when an image is loaded, on initialization or otherwise.
       ! The exception here is that animations will update this attribute as
@@ -320,7 +320,7 @@ class ImageFilePrinter(AsciifierBase):
         self.image_path = image_path
 
         valid_resize_methods = [val[0] for val in RESIZE_OPTIONS.values()]
-        valid_resize_names = [val[0] for val in RESIZE_OPTIONS.values()]
+        valid_resize_names = [val[1] for val in RESIZE_OPTIONS.values()]
         if resize_method not in valid_resize_methods:
             message = f'Invalid resize method: {resize_method}\n'\
                 f'options are {zip(valid_resize_methods, valid_resize_names)}'
@@ -381,13 +381,13 @@ class ImageFilePrinter(AsciifierBase):
             self._print_animated()
 
         else:
-            rows = len(self.output.split("\n"))
+            rows = self.output.count("\n")
             self.logger.info(f'dumping {len(self.output)} chars in {rows} rows derived from '
                 f'{self.image_path} to stdout')
             #sys.stdout.write(self.output)
             #sys.stdout.flush()  # TODO this might be marginally faster
             print(self.output, end='')
-        print(Cell.reset_escape)
+        print(Cell.reset_escape, end='')
 
 
     def _print_animated(self):
@@ -405,10 +405,9 @@ class ImageFilePrinter(AsciifierBase):
             for text_frame in self.frames:
                 #self.logger.debug(f'dumping {len(text_frame)} chars derived '
                     #f'from {self.image_path} to stdout')
-                # note that frames seem to have inconsistent char len??
                 #sys.stdout.write(text_frame)
                 #sys.stdout.flush()  # TODO this might be marginally faster
-                print(text_frame)
+                print(text_frame, end='')
                 sleep(frame_interval)
             if not self.loop_infinitely:
                 done = True
@@ -533,7 +532,7 @@ class ImageFilePrinter(AsciifierBase):
                 pix = image.getpixel((i, j))
                 cell = Cell(pix, self.char_by_brightness, self.chars)
                 output += str(cell)
-            output += '\n'
+            output += '\n'  # trailing newline per line, including final newline
 
         self.output = output
         self.logger.debug(f'done converting {image}')
