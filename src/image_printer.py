@@ -38,7 +38,7 @@ from .config import CHARS, LOG_FILENAME, RESIZE_OPTIONS
 LOGLEVEL = logging.INFO # set this to DEBUG to... well...
 
 
-# A couple of useful utility functions for hacking up ImageFilePrinter.output
+# A couple of useful functions for hacking up ImageFilePrinter.output
 #  post-generation
 
 def remove_ansi_escape_sequences(text):
@@ -277,17 +277,19 @@ class ImageFilePrinter(AsciifierBase):
             chars=CHARS, animate=0, loop_infinitely=False, logfile=None):
         """
         :param image_path: str, path to image to represent as text.
-            supported image formats are those supported by PIL version 9
-            as well as .avif.
+            Supported image formats are those supported by PIL version 9
+            as well as .avif when pillow_avif is installed.
         :param max_height: int, restrict output text to this number of rows
-            defaults to calling terminal size from shutil.get_terminal_size
-        :param max_width: int, restrict output text to this number of columns
-            defaults to calling terminal size from shutil.get_terminal_size
-        :param resize_method: PIL.Image.<ResamplingMethod>, see PIL version 9.
+            defaults to terminal rows - 1 (to account for most prompts)
+        :param max_width: int, restrict output text to this width in cells;
+            One cell is two characters wide.
+            Defaults to terminal columns // 2
+        :param resize_method: PIL.Image.<ResamplingMethod>, see PIL version 9;
+            integer >= 0 and <= 5.
         :param char_by_brightness: bool, whether to use brightness to determine
-            output glyphs (defaults to False, which will use alpha)
-        :param chars: list of 1-length strings, any non-zero length
-            characters that will be selected from, intended to be ordered 
+            output glyphs (defaults to False, use alpha instead)
+        :param chars: list of at least one string where each string has len 1.
+            Characters that will be selected from, intended to be ordered 
             from least to most visible when printed to a terminal
         :param animate: int, truthiness determines whether to read keyframes
             from animated .gif image inputs and print each keyframe. If truthy,
@@ -360,11 +362,12 @@ class ImageFilePrinter(AsciifierBase):
             self.max_width = get_terminal_size().columns // 2
         self._validate_dimensions(self.max_height, self.max_width)
         self.load_image()  # loads image into memory
+        self.output_width = None
+        self.output_height = None
         self.generate_output()  # converts self.image_object to string output
-        self.unload_image()  # removes self.image_object from memory
-        # I'm leaving these in as a public interface for now, TBD
-        # whether this is a good idea before merging to main TODO
-        # also TODO tests
+        self.logger.info(f'{self.output_width}, {self.output_height}')
+        self.unload_image()
+        # TODO tests
 
 
     def print_text(self):
@@ -375,7 +378,7 @@ class ImageFilePrinter(AsciifierBase):
         Dump static output to stdout.
         """
         # checks for windows internally
-        just_fix_windows_console()  # TODO limit this?
+        just_fix_windows_console()
 
         if self.animate:
             self._print_animated()
@@ -397,8 +400,8 @@ class ImageFilePrinter(AsciifierBase):
         """
         done = False
         frame_interval = self.animate / 1000.0
-        self.logger.info(f'dumping animated image {self.image_path} to stdout '
-            f'with {frame_interval}s between frames')
+        self.logger.info(f'dumping {len(self.frames)} frames from '
+        f'{self.image_path} to stdout with {frame_interval}s between frames')
         while not done:
             # important to minimize overhead in this for loop...
             # maybe a good idea to write this in C?
@@ -470,6 +473,8 @@ class ImageFilePrinter(AsciifierBase):
         else:
             self.output = self._convert_image_to_string(
                 self._prepare_for_dump(self.image_object))
+        self.output_width = length_after_processing(self.output[:self.output.index('\n')])
+        self.output_height = self.output.count('\n')
 
 
     def unload_image(self):
