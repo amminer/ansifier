@@ -130,8 +130,9 @@ class Cell(AsciifierBase):
     or by brightness (total of RGB values).
     Currently, each character is composed of
         a foreground color escape,
-        the character itself,
-        and a reset escape
+        2x the character itself
+    resets are handled by the ImageFilePrinter (so I should probably
+    move that class var huh)
     """
 
     reset_escape = "\033[38;2;255;255;255m"
