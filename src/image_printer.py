@@ -23,6 +23,7 @@ try:
 except ImportError:  # not readily available via apt afaik, I wanna run w/o venv
     pass # log warning? eh
 import re
+import signal
 import sys
 
 from PIL import Image
@@ -395,6 +396,7 @@ class ImageFilePrinter(AsciifierBase):
         Print each frame to stdout in a loop,
         forever if self.loop_infinitely... TODO a duration might be a nice option?
         """
+        self._register_sigint_handler()
         done = False
         frame_interval = self.animate / 1000.0
         self.logger.info(f'dumping animated image {self.image_path} to stdout '
@@ -477,6 +479,16 @@ class ImageFilePrinter(AsciifierBase):
         dellocates image object, but not the text output it generated
         """
         self.image_object = None
+
+
+    def _register_sigint_handler(self):
+        """
+        prints an ansi reset before doing the usual thing
+        """
+        def handler(signum, frame):
+            print(Cell.reset_escape, end='')
+            signal.default_int_handler(signum, frame)
+        signal.signal(signal.SIGINT, handler)
 
 
     def _convert_animation_to_frames(self):
