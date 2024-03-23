@@ -199,6 +199,10 @@ def get_args():
 
 
 if __name__ == "__main__":
-    image_printer = run_cli()
-    image_printer.print_text()
+    try:
+        image_printer = run_cli()
+        image_printer.print_text()
+    except Exception as e:
+        print(e)
+        exit(1)
 

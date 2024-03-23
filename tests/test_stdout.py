@@ -19,9 +19,6 @@ def test_prints_to_stdout():
     Checks that something was written to stdout
     DOES NOT check output for correctness otherwise
     """
-    printer = ImageFilePrinter(TEST_IMAGE_PATH)
-
     proc = run([SCRIPT_PATH, TEST_IMAGE_PATH], stdout=PIPE, stdin=PIPE)
-
     assert proc.stdout
 

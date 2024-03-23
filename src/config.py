@@ -3,6 +3,8 @@ exposes broadly useful configuration variables
 """
 
 
+import logging
+
 from PIL.Image import NEAREST, LANCZOS, BILINEAR, BICUBIC, BOX, HAMMING
 from sys import stdout
 
@@ -13,6 +15,8 @@ def term_supports_utf8():
 
 
 LOG_FILENAME = 'asciifier.log'
+
+LOG_LEVEL = logging.INFO # set this to DEBUG to... well...
 
 # use utf-8 if possible, otherwise ascii
 UTF8_DEFAULT_CHARS = ['\u2588', '\u2593', '\u2592', '\u2591',

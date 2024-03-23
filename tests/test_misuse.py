@@ -1,0 +1,31 @@
+"""
+Tests whether using the supported public interface to ImageFilePrinter
+incorrectly results in program crashes or other unintended behavior
+"""
+
+
+import os
+from copy import deepcopy
+
+from asciifier import ImageFilePrinter, PACKAGE_ROOT
+
+
+TEST_IMAGE_PATH = os.path.join(PACKAGE_ROOT, 'images-examples/catClout.png')
+
+
+def test_unload_then_generate_output():
+    """ 
+    Checks that nothing happens when generate_output is called without
+    an image object in memory
+    """
+    printer = ImageFilePrinter(TEST_IMAGE_PATH)
+
+    printer.load_image()
+    printer.unload_image()
+
+    printer_copy = deepcopy(printer)
+
+    printer.generate_output()
+
+    assert printer_copy == printer
+

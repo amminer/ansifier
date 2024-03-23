@@ -61,7 +61,7 @@ while h < len(sysinfo_lines):
 # TODO de-prioritize neofetch lines for screen space vs. ascii art here?
 
 # Account for horizonal room for neofetch output
-w = (w_orig - max(list(map(length_after_processing, sysinfo_lines)))) // 2 - 6
+w = (w_orig - max(list(map(length_after_processing, sysinfo_lines)))) - 6
 
 # override this part of the cli
 parser = get_parser()

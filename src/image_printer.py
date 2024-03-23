@@ -20,7 +20,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 try:
     import pillow_avif  # not ref'd in code, pillow uses this to support avif
-except ImportError:  # not readily available via apt afaik, I wanna run w/o venv
+except ImportError:  # not as available as pillow itself
     pass # log warning? eh
 import re
 import signal
@@ -33,10 +33,7 @@ from shutil import get_terminal_size
 from time import sleep
 
 
-from .config import CHARS, LOG_FILENAME, RESIZE_OPTIONS
-
-
-LOGLEVEL = logging.INFO # set this to DEBUG to... well...
+from .config import CHARS, LOG_FILENAME, RESIZE_OPTIONS, LOG_LEVEL
 
 
 # A couple of useful functions for hacking up ImageFilePrinter.output
@@ -85,23 +82,23 @@ class AsciifierBase():
             raise TypeError(message)
 
 
-    def _validate_positive_nonzero_int(self, i_to_check, message=None):
+    def _validate_int(self, i_to_check, minimum=0, message=None):
         """
         Checks
-        1. i_to_check is an integer
-        2. i_to_check is > 0
+        1. i_to_check can be cast to integer
+        2. i_to_check is > minimum
         May raise a ValueError if either check fails
         """
         if message is None:
-            message = f'param must be an integer > 0, but {self.__class__} '\
+            message = f'param must be an integer > {minimum}, but {self.__class__} '\
                 f'received {i_to_check}'
         try:
             i_to_check = int(i_to_check)
         except ValueError as e:
             self.logger.error(str(e) + message)
-            raise e  # TODO append message before raising
+            raise e
 
-        if not i_to_check > 0:
+        if not i_to_check > minimum:
             raise ValueError(message)
 
     
@@ -131,11 +128,9 @@ class Cell(AsciifierBase):
     Currently, each character is composed of
         a foreground color escape,
         2x the character itself
-    resets are handled by the ImageFilePrinter (so I should probably
-    move that class var huh)
+    resets (\\033[38;2;255;255;255m) are to be handled by the code
+    that uses the Cell
     """
-
-    reset_escape = "\033[38;2;255;255;255m"
 
     def __init__(self, pixel, from_brightness=False, chars=None):
         """
@@ -247,17 +242,19 @@ class ImageFilePrinter(AsciifierBase):
       ImageFilePrinter('/path/to/image.png') -> <ImageFilePrinter>.
       Images are loaded into memory and converted to text output
       on object initialization.
-    * Calling ImageFilePrinter.save_text(path) will
+    * Calling save_text(path) will
       dump text output to a file at path.
-    * Calling ImageFilePrinter.print_text() will
+    * Calling print_text() will
       dump text output to stdout.
     * Calling unload_image() will unload the Image object from memory,
       but will NOT unload stored text output.
-      Default behavior is to unload the image after output has been generated
-      in init, TODO may add a flag for this to __init__, maybe also for input
-      generation; would enhance extensibility, maybe.
+      Default behavior is to unload image after output was generated in __init__
     * Calling load_image() will load the Image object back into memory
-      from the file at self.image_path and re-generate text output.
+      from the file at self.image_path
+    * Calling generate_output() will always populate self.output if an image
+      is loaded, and will also populate self.frames when self.animate is truthy.
+      If generate_output() is called with no image loaded, nothing happens.
+      
 
     Manipulating attributes in any other way is unsupported, at least for now.
     Dynamic changes to max_height and max_width, etc., are likely to be
@@ -273,6 +270,10 @@ class ImageFilePrinter(AsciifierBase):
       for each asciified frame in the last animated image that was loaded.
     """
 
+    reset_escape = "\033[38;2;255;255;255m"
+
+    def __eq__(self, other) :
+        return self.__dict__ == other.__dict__
 
     def __init__(self, image_path, max_height=None, max_width=None,
             resize_method=Image.LANCZOS, char_by_brightness=False, 
@@ -283,8 +284,8 @@ class ImageFilePrinter(AsciifierBase):
             as well as .avif when pillow_avif is installed.
         :param max_height: int, restrict output text to this number of rows
             defaults to terminal rows - 1 (to account for most prompts)
-        :param max_width: int, restrict output text to this width in cells;
-            One cell is two characters wide.
+        :param max_width: int, restrict output text to this width in characters;
+            One cell is two characters wide, so 1 is not a valid max_width.
             Defaults to terminal columns // 2
         :param resize_method: PIL.Image.<ResamplingMethod>, see PIL version 9;
             integer >= 0 and <= 5.
@@ -311,6 +312,8 @@ class ImageFilePrinter(AsciifierBase):
 
         self.image_object = None
         self.output = None
+        self.output_width = None
+        self.output_height = None
         self.frames = []
 
         type_check_message = '{} must be a {}, '\
@@ -333,8 +336,8 @@ class ImageFilePrinter(AsciifierBase):
         self.resize_method = resize_method
 
         if animate != 0:
-            self._validate_positive_nonzero_int(animate,
-                type_check_message.format(
+            self._validate_int(animate,
+                message=type_check_message.format(
                     'animate', 'non-negative integer', type(animate)))
         self.animate = animate
 
@@ -353,23 +356,23 @@ class ImageFilePrinter(AsciifierBase):
             '(len {len(self.chars)})')
         self.logger.debug(f'working with these intervals: {self.intervals} '
             '(len {len(self.intervals)})')
-        self.max_height = max_height 
-        self.max_width = max_width
-        if self.max_height is None or self.max_width is None:
+
+        if max_height is None or max_width is None:
             self.logger.debug('Getting terminal dimensions')
-        if self.max_height is None:
-            self.max_height = get_terminal_size().lines - 1  # -1 for prompt
-        if self.max_width is None:
+        if max_height is None:
+            max_height = get_terminal_size().lines - 1  # -1 for prompt
+        if max_width is None:
             # assume a terminal character is about twice as tall as it is wide
-            self.max_width = get_terminal_size().columns // 2
-        self._validate_dimensions(self.max_height, self.max_width)
+            max_width = get_terminal_size().columns
+        self._validate_dimensions(max_height, max_width)
+        self.max_height = max_height
+        self.max_width = max_width // 2
+
         self.load_image()  # loads image into memory
-        self.output_width = None
-        self.output_height = None
         self.generate_output()  # converts self.image_object to string output
-        self.logger.info(f'{self.output_width}, {self.output_height}')
+        self.logger.info('generated output with '
+            f'w:{self.output_width}, h:{self.output_height}')
         self.unload_image()
-        # TODO tests
 
 
     def print_text(self):
@@ -392,7 +395,7 @@ class ImageFilePrinter(AsciifierBase):
             #sys.stdout.write(self.output)
             #sys.stdout.flush()  # TODO this might be marginally faster
             print(self.output, end='')
-        print(Cell.reset_escape, end='')
+        print(ImageFilePrinter.reset_escape, end='')
 
 
     def _print_animated(self):
@@ -455,28 +458,25 @@ class ImageFilePrinter(AsciifierBase):
         try:
             # TODO handle DecompressionBombWarning for large images
             # this holds the file descriptor open for the lifetime of
-            # the object afaik, which is necessary for seeks.
-            # I tried using with & Image.load in order to close the
-            # FD once the data is in memory, but it caused a weird bug
-            # with animated gifs...
-            # there's no way this is a pillow bug, but it sure seems like
-            # one at 2:30 AM.
+            # the image object afaik, which seems necessary for seeks.
             self.image_object = Image.open(self.image_path, 'r')
-            #with Image.open(self.image_path, 'r') as image:
-                #image.load()
-                #self.image_object = image
         except Exception as e:
             self.logger.critical(e)
             raise e
 
 
     def generate_output(self):
+        if self.image_object is None:
+            self.logger.warning('generate_output() was called '
+                'with no image loaded')
+            return
         if self.animate:
             self.frames = self._convert_animation_to_frames()
         else:
             self.output = self._convert_image_to_string(
                 self._prepare_for_dump(self.image_object))
-        self.output_width = length_after_processing(self.output[:self.output.index('\n')])
+        self.output_width = length_after_processing(
+            self.output[:self.output.index('\n')])
         self.output_height = self.output.count('\n')
 
 
@@ -484,6 +484,10 @@ class ImageFilePrinter(AsciifierBase):
         """
         dellocates image object, but not the text output it generated
         """
+        if self.image_object is not None:
+            self.image_object.close()
+        else:
+            self.logger.warning('unload_image() called with no image loaded')
         self.image_object = None
 
 
@@ -492,7 +496,7 @@ class ImageFilePrinter(AsciifierBase):
         prints an ansi reset before doing the usual thing
         """
         def handler(signum, frame):
-            print(Cell.reset_escape, end='')
+            print(ImageFilePrinter.reset_escape, end='')
             signal.default_int_handler(signum, frame)
         signal.signal(signal.SIGINT, handler)
 
@@ -593,16 +597,19 @@ class ImageFilePrinter(AsciifierBase):
             raise error_t(error_message)
 
 
-    def _validate_dimensions(self, max_height, max_width):
+    def _validate_dimensions(self, height, width):
         """
         For each dimension, checks:
         1. dimension is an integer
         2. dimension is > 0
         May raise a ValueError if either check fails
         """
-        for dim in (max_height, max_width):
-            self._validate_positive_nonzero_int(dim, 'requested dimension must '
-                f'be an integer > 0, but {__class__} received {dim}')
+        self._validate_int(height,
+            message='requested height must be an integer > 0, '
+                    f'but {__class__} received {height}')
+        self._validate_int(width, 1,
+            message='requested width must be an integer > 1, '
+                    f'but {__class__} received {width}')
 
 
     def _validate_can_write_file(self, filepath, log=True):
@@ -653,7 +660,7 @@ class ImageFilePrinter(AsciifierBase):
         logpath was validated in init.
         """
         logger = logging.getLogger(__name__)
-        logger.setLevel(LOGLEVEL)  
+        logger.setLevel(LOG_LEVEL)
 
         log_formatter = logging.Formatter(
             '%(asctime)s;%(levelname)s;%(message)s')
