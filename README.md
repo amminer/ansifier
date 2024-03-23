@@ -1,4 +1,4 @@
-<h1 align="center">ASCIIFIER</h1>
+<h1 align="center">🅰️⚡️☪️ℹ️💈🎏💈📧Ⓡ</h1>
 
 ## 📜 Table of Contents
 
@@ -16,6 +16,9 @@ for converting image files to utf-8 or ascii encoded strings.
 At present, `asciifier` is only able to create its colorful output using ANSI escape codes,
 but plans are being made to add HTML/CSS output and potentially other formats.
 
+There are other repositories with this same name, but I'm pretty sure this one is the best,
+so I'm claiming it for myself going forward :)
+
 ## 🛠 Prerequisites <a name = "prereqs"></a>
 
 Python 3.10 and higher *should* work. Older versions of Python *may* work.
@@ -23,7 +26,10 @@ Python 3.10 and higher *should* work. Older versions of Python *may* work.
 
 `asciifier`'s ANSI-escaped output *should* work as intended on any modern terminal with
 true color support, and *may* work on terminals without this support,
-albeit with funny looking colors.
+albeit with funny looking colors. I have noticed that
+my virtual consoles display the correct characters, but with unusual looking
+colors, for example - it looks like somewhere in the stack the RGB escapes get
+converted to a format with less colors, but I don't know where this happens.
 
 A comprehensive list of terminal environments where `asciifier` has been observed to
 be working correctly has not been compiled, but basically any common Windows 10+ or Linux
@@ -63,11 +69,13 @@ optional arguments to modify the output or save it to a file.
 The script offers a command-line flag or argument for every feature that ImageFilePrinter
 takes on initialization, as well as a few extra options for added convenience.
 The --help output is pretty thorough.
+I recommend linking to this script somewhere on your path or using a shell alias - I
+personally use the script to preview images when I'm looking around my filesystems.
 
 Note that, for every level of resource load on every different stack, there is a different
 upper bound on the output size and a lower bound on the delay between frames for printing
 the output derived from animated .gif files to the terminal. This bottleneck appears to
-be at the terminal emulator layer. I'm currently exploring options to improve performance,
+be at the terminal emulator layer. I'm always exploring options to improve performance,
 but it's possible that there's a fundamental limitation here depending on your environment.
 
 ## 👥 Authors  <a name = "authors"></a>
@@ -79,24 +87,27 @@ So far I ([@amminer](https://github.com/amminer)) am the only contributor.
 AKA shoutouts to my favorite tools:
 
 * 🐍 [Python](https://www.python.org/), of course
-* 🐂 GNU [Bash](https://www.gnu.org/savannah-checkouts/gnu/bash/) and
-  [Coreutils](https://www.gnu.org/savannah-checkouts/gnu/coreutils)
 * 📝 [Vim](https://www.vim.org/)
+* 🐂 GNU [Coreutils](https://www.gnu.org/savannah-checkouts/gnu/coreutils)
 
 Running under
 
-* 👣 [GNOME Terminal](https://help.gnome.org/users/gnome-terminal/stable/)
+* 🚀 [Alacritty](https://github.com/alacritty/alacritty)
 
 On
 
 * 🐧 [Linux Mint](https://linuxmint.com/) with
 * 🌿 [Cinnamon DE](https://github.com/linuxmint/Cinnamon)
+&
+* 🍥 [Debian 12](https://www.debian.org/releases/stable/releasenotes) with
+* 🪟 [i3 WM](https://i3wm.org/)
 
 ## 🙏 Acknowledgements  <a name = "acknowledgements"></a>
 
-Big thanks to the maintainers of a few very useful packages that this package depends on.
+Thanks to the maintainers of:
 * [Pillow](https://github.com/python-pillow/Pillow) for implementing
 all those image scaling algorithms
 * [colorama](https://github.com/tartley/colorama) for dealing with Windows nonsense
   so I don't have to 😄
 * [pytest](https://docs.pytest.org/en/8.0.x/), my beloved
+* [this cool webpage](https://stevenacoffman.github.io/homoglyphs/) that I used to generate the title of this document
