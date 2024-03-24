@@ -6,7 +6,7 @@ bare minimum smoke test
 
 import os
 
-from asciifier import ImageFilePrinter, PACKAGE_ROOT
+from ansifier import ImageFilePrinter, PACKAGE_ROOT
 
 
 TEST_IMAGE_PATH = os.path.join(PACKAGE_ROOT, 'images-examples/catClout.png')

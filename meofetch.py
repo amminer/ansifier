@@ -5,7 +5,7 @@
 See -h
 A bit of a scrappy, hacked up little script, at least for now.
 * Steals output from neofetch --off
-* generates ascii art from the image, takes terminal size into account
+* generates ansi art from the image, takes terminal size into account
 * combines these outputs and prints it all
 
 # TODO XDG_CONFIG
@@ -58,7 +58,7 @@ sysinfo_lines = [' '*BETWEEN_PADDING + l for l in sysinfo_lines]
 # take lines off the bottom of neofetch's output until the output will fit in the terminal
 while h < len(sysinfo_lines):
     sysinfo_lines.pop()
-# TODO de-prioritize neofetch lines for screen space vs. ascii art here?
+# TODO de-prioritize neofetch lines for screen space vs. ansi art here?
 
 # Account for horizonal room for neofetch output
 w = (w_orig - max(list(map(length_after_processing, sysinfo_lines)))) - 6
@@ -75,7 +75,7 @@ for helparg in parser._actions[0].option_strings:
         print('meofetch takes output from the script below and interleaves it '
             'with neofetch system info, with some padding.\n'
             'if the terminal isn\'t large enough, neofetch lines may be '
-            'trimmed from the bottom, and/or the ascii image may not display.\n'
+            'trimmed from the bottom, and/or the ansi image may not display.\n'
             'Note that if no image file is provided, meofetch defaults to use '
             '$HOME/Pictures/meofetch-art.png. If $HOME is undefined and no '
             'path is provided, meofetch will not work.\n'  # TODO XDG_CONFIG
@@ -107,46 +107,46 @@ if w > 0 and h > 0:
 
     # the .output attr was not originally intended as a public interface,
     #  but it sure works as one
-    ascii_art = run_cli(args).output
-    ascii_lines = ascii_art.split('\n')[:-1]
-    max_ascii_line_len = max(list(map(length_after_processing, ascii_lines)))
+    ansi_art = run_cli(args).output
+    ansi_lines = ansi_art.split('\n')[:-1]
+    max_ansi_line_len = max(list(map(length_after_processing, ansi_lines)))
     # pad left
     if LEFT_PADDING != -1:
-        ascii_lines = [' '*LEFT_PADDING + line for line in ascii_lines]
-    else:  # center ascii output horizontally
+        ansi_lines = [' '*LEFT_PADDING + line for line in ansi_lines]
+    else:  # center ansi output horizontally
         # get the longest total line...
         longest_output_line = max(map(length_after_processing,
-            [l1+l2 for l1, l2 in zip(ascii_lines, sysinfo_lines)]))
+            [l1+l2 for l1, l2 in zip(ansi_lines, sysinfo_lines)]))
         LEFT_PADDING = (w_orig - longest_output_line) // 2
-        ascii_lines = [' '*LEFT_PADDING + line for line in ascii_lines]  # TODO
+        ansi_lines = [' '*LEFT_PADDING + line for line in ansi_lines]  # TODO
 else:
-    ascii_lines = []
-    max_ascii_line_len = 0
+    ansi_lines = []
+    max_ansi_line_len = 0
 
-# ensure neofetch output does not unindent if it has more rows than ascii art
-# also centers ascii art in this case
+# ensure neofetch output does not unindent if it has more rows than ansi art
+# also centers ansi art in this case
 # TODO use a generator to alternate padding direction?
 i = 0
-padding_row = ' ' * (max_ascii_line_len + LEFT_PADDING)
-while len(sysinfo_lines) > len(ascii_lines):
+padding_row = ' ' * (max_ansi_line_len + LEFT_PADDING)
+while len(sysinfo_lines) > len(ansi_lines):
     if i % 2:
-        ascii_lines.insert(0, padding_row)
+        ansi_lines.insert(0, padding_row)
     else:
-        ascii_lines.append(padding_row)
+        ansi_lines.append(padding_row)
     i += 1
 
-# ensure neofetch output is centered when ascii art has more rows
+# ensure neofetch output is centered when ansi art has more rows
 # TODO this is repeated in image_printer_go_brrr.py almost exactly
-difference = len(ascii_lines) - len(sysinfo_lines) + 2
+difference = len(ansi_lines) - len(sysinfo_lines) + 2
 pad_num = difference // 2
 pad = [' ' for i in range(pad_num)]
 sysinfo_lines = pad + sysinfo_lines + pad
 
-for ascii_line, sysinfo_line in zip(ascii_lines, sysinfo_lines):
-    # ensure no ascii lines are shorter
-    #  seemingly due to how asciifier works... TODO?
-    ascii_line = ascii_line.ljust(max_ascii_line_len)
-    print(ascii_line, sysinfo_line)
+for ansi_line, sysinfo_line in zip(ansi_lines, sysinfo_lines):
+    # ensure no ansi lines are shorter
+    #  seemingly due to how ansifier works... TODO?
+    ansi_line = ansi_line.ljust(max_ansi_line_len)
+    print(ansi_line, sysinfo_line)
 
 # This is necessary due to something about the output
 #  from neofetch... but why??? Something about cooked vs raw chars?

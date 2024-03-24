@@ -1,4 +1,4 @@
-<h1 align="center">🅰️⚡️☪️ℹ️💈🎏💈📧Ⓡ</h1>
+<h1 align="center">🅰️🅽⚡️ℹ️🎏💈📧Ⓡ</h1>
 
 ## 📜 Table of Contents
 
@@ -11,40 +11,37 @@
 
 ## 🧐 About <a name = "about"></a>
 
-`asciifier` is a python package which exposes a simple interface
+`ansifier` is a python package which exposes a simple interface
 for converting image files to utf-8 or ascii encoded strings.
-At present, `asciifier` is only able to create its colorful output using ANSI escape codes,
+At present, `ansifier` is only able to create its colorful output using ANSI escape codes,
 but plans are being made to add HTML/CSS output and potentially other formats.
-
-There are other repositories with this same name, but I'm pretty sure this one is the best,
-so I'm claiming it for myself going forward :)
 
 ## 🛠 Prerequisites <a name = "prereqs"></a>
 
 Python 3.10 and higher *should* work. Older versions of Python *may* work.
 3.9 is especially likely to be okay, but extensive testing has not been done.
 
-`asciifier`'s ANSI-escaped output *should* work as intended on any modern terminal with
+`ansifier`'s ANSI-escaped output *should* work as intended on any modern terminal with
 true color support, and *may* work on terminals without this support,
 albeit with funny looking colors. I have noticed that
 my virtual consoles display the correct characters, but with unusual looking
 colors, for example - it looks like somewhere in the stack the RGB escapes get
 converted to a format with less colors, but I don't know where this happens.
 
-A comprehensive list of terminal environments where `asciifier` has been observed to
+A comprehensive list of terminal environments where `ansifier` has been observed to
 be working correctly has not been compiled, but basically any common Windows 10+ or Linux
 environment should be okay. No testing or usage has taken place whatsoever on Mac OSX,
 to my knowledge.
 
-Note that `asciifier` does NOT seem to play nice with
+Note that `ansifier` does NOT seem to play nice with
 [bpython](https://bpython-interpreter.org/),
 which is a real shame because I love that program.
 Other similar environments which also make use of ANSI escapes may be similarly
-disagreeable to `asciifier`'s emissions.
+disagreeable to `ansifier`'s emissions.
 
 ## 📦 Installation <a name = "installation"></a>
 
-I intend to publish `asciifier` to PyPI in the near future, but for now you have to:
+I intend to publish `ansifier` to PyPI in the near future, but for now you have to:
 
 * clone this repository
 * create and activate a virtual environment
@@ -55,13 +52,13 @@ If you cloned the repository to somewhere on your PYTHONPATH, you should be able
 like so:
 
 ```py
-from asciifier import ImageFilePrinter
+from ansifier import ImageFilePrinter
 p = ImageFilePrinter('path/to/an/image.file')
 p.print_text()
 p.save_file('path/to/output.file')
 ```
 
-https://github.com/amminer/asciifier/assets/107884857/3ceab1fb-dbf5-44ef-9421-5e42a34cee66
+https://github.com/amminer/ansifier/assets/107884857/3ceab1fb-dbf5-44ef-9421-5e42a34cee66
 
 You can also run the script located in the package's root, `image_printer_go_brrr.py`,
 which takes a file path as its only required argument as well as many

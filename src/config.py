@@ -14,7 +14,7 @@ def term_supports_utf8():
     return stdout.encoding.lower() == 'utf-8'
 
 
-LOG_FILENAME = 'asciifier.log'
+LOG_FILENAME = 'ansifier.log'
 
 LOG_LEVEL = logging.INFO # set this to DEBUG to... well...
 

@@ -7,7 +7,7 @@ incorrectly results in program crashes or other unintended behavior
 import os
 from copy import deepcopy
 
-from asciifier import ImageFilePrinter, PACKAGE_ROOT
+from ansifier import ImageFilePrinter, PACKAGE_ROOT
 
 
 TEST_IMAGE_PATH = os.path.join(PACKAGE_ROOT, 'images-examples/catClout.png')
