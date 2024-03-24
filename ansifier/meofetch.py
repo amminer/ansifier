@@ -20,10 +20,10 @@ import re
 from shutil import get_terminal_size
 from sys import argv, path
 from subprocess import check_output
-from image_printer_go_brrr import run_cli, get_parser
+from cli import run_cli, get_parser
 
-from ansifier.config import CHARS, RESIZE_OPTIONS
-from ansifier.image_printer import ImageFilePrinter, length_after_processing
+from config import CHARS, RESIZE_OPTIONS
+from image_printer import ImageFilePrinter, length_after_processing
 
 
 homedir = os.environ['HOME']
@@ -136,7 +136,7 @@ while len(sysinfo_lines) > len(ansi_lines):
     i += 1
 
 # ensure neofetch output is centered when ansi art has more rows
-# TODO this is repeated in image_printer_go_brrr.py almost exactly
+# TODO this is repeated in cli.py almost exactly
 difference = len(ansi_lines) - len(sysinfo_lines) + 2
 pad_num = difference // 2
 pad = [' ' for i in range(pad_num)]

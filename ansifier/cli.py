@@ -6,8 +6,8 @@ import argparse
 from sys import exit
 from shutil import get_terminal_size
 
-from ansifier.config import CHARS, RESIZE_OPTIONS
-from ansifier.image_printer import ImageFilePrinter, length_after_processing
+from config import CHARS, RESIZE_OPTIONS
+from image_printer import ImageFilePrinter, length_after_processing
 
 
 def run_cli(args=None):

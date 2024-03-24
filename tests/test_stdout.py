@@ -11,7 +11,7 @@ from ansifier import ImageFilePrinter, PACKAGE_ROOT
 
 
 TEST_IMAGE_PATH = os.path.join(PACKAGE_ROOT, 'images-examples/catClout.png')
-SCRIPT_PATH = os.path.join(PACKAGE_ROOT, 'image_printer_go_brrr.py')
+SCRIPT_PATH = os.path.join(PACKAGE_ROOT, 'ansifier/cli.py')
 
 
 def test_prints_to_stdout():
