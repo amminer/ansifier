@@ -18,10 +18,6 @@ TODO/ideas for improvements not yet made into GitHub issues:
 
 import logging
 from logging.handlers import RotatingFileHandler
-try:
-    import pillow_avif  # not ref'd in code, pillow uses this to support avif
-except ImportError:  # not as available as pillow itself
-    pass # log warning? eh
 import re
 import signal
 import sys
@@ -281,7 +277,6 @@ class ImageFilePrinter(AnsifierBase):
         """
         :param image_path: str, path to image to represent as text.
             Supported image formats are those supported by PIL version 9
-            as well as .avif when pillow_avif is installed.
         :param max_height: int, restrict output text to this number of rows
             defaults to terminal rows - 1 (to account for most prompts)
         :param max_width: int, restrict output text to this width in characters;
@@ -494,6 +489,7 @@ class ImageFilePrinter(AnsifierBase):
     def _register_sigint_handler(self):
         """
         prints an ansi reset before doing the usual thing
+        this works from source code but not from an installed wheel :|
         """
         def handler(signum, frame):
             print(ImageFilePrinter.reset_escape, end='')

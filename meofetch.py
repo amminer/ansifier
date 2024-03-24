@@ -22,8 +22,8 @@ from sys import argv, path
 from subprocess import check_output
 from image_printer_go_brrr import run_cli, get_parser
 
-from src.config import CHARS, RESIZE_OPTIONS
-from src.image_printer import ImageFilePrinter, length_after_processing
+from ansifier.config import CHARS, RESIZE_OPTIONS
+from ansifier.image_printer import ImageFilePrinter, length_after_processing
 
 
 homedir = os.environ['HOME']
