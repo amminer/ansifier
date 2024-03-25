@@ -78,8 +78,8 @@ class AnsifierBase():
                 f'but {__class__} received {chars}'
 
         if error_t is not None:
-            self.logger.error(message)
-            raise TypeError(message)
+            self.logger.error(error_message)
+            raise TypeError(error_message)
 
 
     def _validate_int(self, i_to_check, minimum=0, message=None):
@@ -197,8 +197,8 @@ class Cell(AnsifierBase):
                 f'integer >=0 and <=255, but {__class__} received {pixel}'
 
         if error_t is not None:
-            self.logger.error(message)
-            raise TypeError(message)
+            self.logger.error(error_message)
+            raise TypeError(error_message)
 
 
     def _get_char(self):
