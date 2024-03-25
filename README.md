@@ -41,7 +41,7 @@ disagreeable to `ansifier`'s emissions.
 
 ## 📦 Installation <a name = "installation"></a>
 
-I intend to publish `ansifier` to PyPI in the near future, but for now you have to:
+This package is on PyPi! Simply `pip install ansifier` and you should be good to go.
 
 * clone this repository
 * create and activate a virtual environment

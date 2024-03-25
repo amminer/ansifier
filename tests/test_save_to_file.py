@@ -6,11 +6,11 @@ bare minimum smoke test
 
 import os
 
-from ansifier import ImageFilePrinter, PACKAGE_ROOT
+from ansifier.ansifier import ImageFilePrinter
 
 
-TEST_IMAGE_PATH = os.path.join(PACKAGE_ROOT, 'images-examples/catClout.png')
-TEST_OUTPUT_TXT_PATH = os.path.join(PACKAGE_ROOT, 'tests/temp.txt')
+TEST_IMAGE_PATH = 'images-examples/catClout.png'
+TEST_OUTPUT_TXT_PATH = 'tests/temp.txt'
 
 
 def test_saves_to_file():

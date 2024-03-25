@@ -7,11 +7,9 @@ bare minimum smoke test
 import os
 from subprocess import run, PIPE
 
-from ansifier import ImageFilePrinter, PACKAGE_ROOT
 
-
-TEST_IMAGE_PATH = os.path.join(PACKAGE_ROOT, 'images-examples/catClout.png')
-SCRIPT_PATH = os.path.join(PACKAGE_ROOT, 'ansifier/cli.py')
+TEST_IMAGE_PATH = 'images-examples/catClout.png'
+SCRIPT_PATH = 'ansifier.py'
 
 
 def test_prints_to_stdout():

@@ -7,10 +7,10 @@ incorrectly results in program crashes or other unintended behavior
 import os
 from copy import deepcopy
 
-from ansifier import ImageFilePrinter, PACKAGE_ROOT
+from ansifier.ansifier import ImageFilePrinter
 
 
-TEST_IMAGE_PATH = os.path.join(PACKAGE_ROOT, 'images-examples/catClout.png')
+TEST_IMAGE_PATH = 'images-examples/catClout.png'
 
 
 def test_unload_then_generate_output():

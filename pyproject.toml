@@ -5,19 +5,19 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.sdist]
 include = [
   "/*.py",
+  "/config",
   "/tests",
-  "/ansifier",
   "/images-examples"
 ]
 exclude = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["ansifier/"]
+packages = ["."]
 
 [project]
 name = "ansifier"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
   { name="Amelia Miner", email="ameliamminer@gmail.com" },
 ]

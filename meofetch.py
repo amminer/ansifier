@@ -22,8 +22,8 @@ from sys import argv, path
 from subprocess import check_output
 from cli import run_cli, get_parser
 
-from config import CHARS, RESIZE_OPTIONS
-from image_printer import ImageFilePrinter, length_after_processing
+from config.config import CHARS, RESIZE_OPTIONS
+from ansifier import ImageFilePrinter, length_after_processing
 
 
 homedir = os.environ['HOME']
