@@ -1,5 +1,6 @@
 <h1 align="center">🅰️🅽⚡️ℹ️🎏💈📧Ⓡ</h1>
 
+
 ## 📜 Table of Contents
 
 - [About](#about)
@@ -10,12 +11,14 @@
 - [Built Using](#built_using)
 - [Acknowledgements](#acknowledgements)
 
+
 ## 🧐 About <a name = "about"></a>
 
 `ansifier` is a python package which exposes a simple interface
 for converting image files to utf-8 or ascii encoded strings.
 At present, `ansifier` is only able to create its colorful output using ANSI escape codes,
 but plans are being made to add HTML/CSS output and potentially other formats.
+
 
 ## 🛠 Prerequisites <a name = "prereqs"></a>
 
@@ -40,32 +43,35 @@ which is a real shame because I love that program.
 Other similar environments which also make use of ANSI escapes may be similarly
 disagreeable to `ansifier`'s emissions.
 
+Also note that the CLI provides a `-m/--meofetch` flag. If you want to use this you
+have to have neofetch installed and on your `PATH` so the script can get its
+output from a subprocess. See the Usage section for more details on the CLI.
+
+
 ## 📦 Installation <a name = "installation"></a>
 
 This package is on PyPi! Simply `pip install ansifier` and you should be good to go.
 
+
 ## 🕹️ Usage <a name="usage"></a>
 
-From python in the environment you `pip install`ed, you can run ansifier as the main module
-i.e. `python -m ansifier` to access the command-line interface. The CLI takes an
+`python -m ansifier` exposes a command-line interface. The CLI takes an
 extensive array of arguments which are pretty thoroughly documented in the --help output.
 More detailed external documentation is in the works, but for now this should be plenty
 to get anyone up and running.
 
-Note that the CLI provides a `-m/--meofetch` flag. If you want to use this you
-have to have neofetch installed and on your `PATH` so the script can get its
-output from a subprocess.
-
-To use ansifier programatically, you can `from ansifier import ImageFilePrinter`.
+To use `ansifier` programatically, you can `from `ansifier` import ImageFilePrinter`.
 More detailed external documentation is in the works, but for now take a look at
-the docstrings of the ImageFilePrinter class for a comprehensive explanation of how the class
+the docstrings of the `ImageFilePrinter` class for a comprehensive explanation of how the class
 is intended to be used, and how you might hack it up in ways that are only somewhat intended.
 
-The CLI takes one argument for each parameter that ImageFilePrinter.\_\_init\_\_ takes,
-plus a few more.
+The CLI takes one argument for each parameter that `ImageFilePrinter.\_\_init\_\_` takes,
+plus a few more. The exception is the array of characters which an `ImageFilePrinter` instance
+chooses from while converting an image to text - right now this is fully configurable except that
+the CLI lacks an argument for it, but it's pretty high on my priority list to add this.
 
-This video is also a little out of date, but - forgive me, for now. I'll update it soon
-to reflect the new streamlined installation and usage process
+Here it is in action! This video is a little out of date - forgive me, for now.
+I'll update it soon to reflect the new streamlined installation and usage process
 (and the new less silly naming scheme).
 
 https://github.com/amminer/ansifier/assets/107884857/3ceab1fb-dbf5-44ef-9421-5e42a34cee66
@@ -77,9 +83,14 @@ will get choppy or stutter. This bottleneck appears to
 be at the terminal emulator layer. I'm always exploring options to improve performance,
 but it's possible that there's a fundamental limitation here depending on your environment.
 
+
 ## 👥 Authors  <a name = "authors"></a>
 
 So far I ([@amminer](https://github.com/amminer)) am the only contributor.
+I would love for others to take an interest in this project, but do keep in mind
+that it's my baby - I've learned a lot while working on it, and that's about
+all I can hope for with any project, so in that way it's been very good to me.
+
 
 ## ⚙ Built Using <a name = "built_using"></a>
 
@@ -101,6 +112,7 @@ On
 * 🍥 [Debian 12](https://www.debian.org/releases/stable/releasenotes) with
 * 🪟 [i3 WM](https://i3wm.org/)
 
+
 ## 🙏 Acknowledgements  <a name = "acknowledgements"></a>
 
 Thanks to the maintainers of:
@@ -109,4 +121,6 @@ all those image scaling algorithms
 * [colorama](https://github.com/tartley/colorama) for dealing with Windows nonsense
   so I don't have to 😄
 * [pytest](https://docs.pytest.org/en/8.0.x/), my beloved
+* [angr]('https://github.com/angr/angr') for teaching me how to structure a python package by example
+  (and, on a mostly unrelated note, for creating one of my current favorite pieces of software)
 * [this cool webpage](https://stevenacoffman.github.io/homoglyphs/) that I used to generate the title of this document
