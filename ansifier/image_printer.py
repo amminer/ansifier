@@ -7,7 +7,7 @@ TODO/ideas for improvements not yet made into GitHub issues:
     * enhancement: generalize a wrapper for _validate functions to dry code out
     * enhancement: more robust tests that valid inputs work
     * enhancement: test for expected exceptions with bad inputs!
-    * enhancement: add utf-8 check to AsciifierBase, warn if warranted
+    * enhancement: add utf-8 check to ansifier, warn if warranted
     * feature/enhancement: option: disable validation (performance optimization)
     * feature: save and load gif frames to and from files (proprietary format?)
     * feature: allow ImageFilePrinter to reload image file
@@ -18,10 +18,6 @@ TODO/ideas for improvements not yet made into GitHub issues:
 
 import logging
 from logging.handlers import RotatingFileHandler
-try:
-    import pillow_avif  # not ref'd in code, pillow uses this to support avif
-except ImportError:  # not as available as pillow itself
-    pass # log warning? eh
 import re
 import signal
 import sys
@@ -33,7 +29,7 @@ from shutil import get_terminal_size
 from time import sleep
 
 
-from .config import CHARS, LOG_FILENAME, RESIZE_OPTIONS, LOG_LEVEL
+from config import CHARS, LOG_FILENAME, RESIZE_OPTIONS, LOG_LEVEL
 
 
 # A couple of useful functions for hacking up ImageFilePrinter.output
@@ -48,7 +44,7 @@ def length_after_processing(text):
     return len(processed_text)
 
 
-class AsciifierBase():
+class AnsifierBase():
     """
     contains input validation functions
     shared between Cell and ImageFilePrinter classes.
@@ -111,7 +107,7 @@ class AsciifierBase():
             raise TypeError(message)
 
 
-class Cell(AsciifierBase):
+class Cell(AnsifierBase):
     """
     The intended public interface for this class is:
     * instantiation with at least a tuple of (r, g, b, a) integers,
@@ -235,7 +231,7 @@ class Cell(AsciifierBase):
         return char
 
 
-class ImageFilePrinter(AsciifierBase):
+class ImageFilePrinter(AnsifierBase):
     """
     The intended public interface for this class is
     * Instantiation with at least an image path, the image to turn into text
@@ -267,7 +263,7 @@ class ImageFilePrinter(AsciifierBase):
         the object converts frames into strings to dump. Only the most recently
         converted frame is stored in this attr (NOT the most recently dumped).
     * self.frames is like self.output except it stores a list, with one element
-      for each asciified frame in the last animated image that was loaded.
+      for each ansified frame in the last animated image that was loaded.
     """
 
     reset_escape = "\033[38;2;255;255;255m"
@@ -281,7 +277,6 @@ class ImageFilePrinter(AsciifierBase):
         """
         :param image_path: str, path to image to represent as text.
             Supported image formats are those supported by PIL version 9
-            as well as .avif when pillow_avif is installed.
         :param max_height: int, restrict output text to this number of rows
             defaults to terminal rows - 1 (to account for most prompts)
         :param max_width: int, restrict output text to this width in characters;
@@ -302,7 +297,7 @@ class ImageFilePrinter(AsciifierBase):
             may be longer depending on output dimensions, hardware, terminal
             emulator, etc.
             It is advisable to set this value to some factor of your monitor's
-            refresh rate to avoid your monitor catching asciifier mid-print.
+            refresh rate to avoid your monitor catching ansifier mid-print.
         """
         self.logger = None
         if logfile is None:
@@ -494,6 +489,7 @@ class ImageFilePrinter(AsciifierBase):
     def _register_sigint_handler(self):
         """
         prints an ansi reset before doing the usual thing
+        this works from source code but not from an installed wheel :|
         """
         def handler(signum, frame):
             print(ImageFilePrinter.reset_escape, end='')

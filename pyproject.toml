@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/*.py",
+  "/tests",
+  "/ansifier",
+  "/images-examples"
+]
+exclude = [
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["ansifier/"]
+
+[project]
+name = "ansifier"
+version = "0.0.1"
+authors = [
+  { name="Amelia Miner", email="ameliamminer@gmail.com" },
+]
+description = "A python package to represent static & animated images as text"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Natural Language :: English",
+    "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+    "Topic :: Artistic Software",
+    "Topic :: System :: Console Fonts",
+    "Topic :: System :: Shells",
+    "Topic :: Utilities"
+] 
+dependencies = [
+  "Pillow>=9.0.1",
+  "colorama==0.4.6"
+]
+
+[project.urls]
+Homepage = "https://github.com/amminer/ansifier"
+Issues = "https://github.com/amminer/ansifier/issues"
+

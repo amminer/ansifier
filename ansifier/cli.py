@@ -6,8 +6,8 @@ import argparse
 from sys import exit
 from shutil import get_terminal_size
 
-from src.config import CHARS, RESIZE_OPTIONS
-from src.image_printer import ImageFilePrinter, length_after_processing
+from config import CHARS, RESIZE_OPTIONS
+from image_printer import ImageFilePrinter, length_after_processing
 
 
 def run_cli(args=None):
@@ -145,7 +145,7 @@ def get_parser():
             'print them with ANIMATE milliseconds of delay between frames. '
             'This option is incompatible with -f. '
             'It is advisable to set this value to some factor of your monitor\'s '
-            'refresh rate to avoid your monitor catching asciifier mid-print.')
+            'refresh rate to avoid your monitor catching ansifier mid-print.')
 
     argparser.add_argument('-f', '--save-to-file', action='store', type=str,
         required=False, default=None, help='Write output to a file. '

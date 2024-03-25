@@ -8,7 +8,7 @@ import os
 import pytest
 from PIL import Image
 
-from asciifier import ImageFilePrinter, PACKAGE_ROOT
+from ansifier import ImageFilePrinter, PACKAGE_ROOT
 
 
 TEST_IMAGE_PATH = os.path.join(PACKAGE_ROOT, 'images-examples/catClout.png')

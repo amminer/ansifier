@@ -8,7 +8,7 @@ Could use inheritance for test classes but would probably be overwrought
 import os
 from unittest import TestCase
 
-from asciifier import ImageFilePrinter, PACKAGE_ROOT
+from ansifier import ImageFilePrinter, PACKAGE_ROOT
 
 
 class TestSquare(TestCase):
