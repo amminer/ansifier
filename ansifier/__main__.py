@@ -125,7 +125,7 @@ def get_parser():
     argparser.add_argument('-C', '--limit-low-chars', action='store',
             type=int, required=False, default=0, help='remove <arg> chars '
                 f'from low (transparent) output options; preserves space char. '
-                'Available chars are: {CHARS}')
+                f'Available chars are: {CHARS}')
 
     # TODO this is a fun idea, but tricky in combination with other options
     #argparser.add_argument('-o', '--char-offset', action='store',
@@ -141,7 +141,8 @@ def get_parser():
         required=False, default='lz', help='algorithm used for resampling '
             'image to desired output dimensions. Defaults to "lz", Lanczos, '
             'which tends to work best when scaling images down to normal '
-            f'terminal dimensions. Options are: {readable_resize_options}')
+            'terminal dimensions. Options are the keys of this dict: '
+            f'{readable_resize_options}')
 
     argparser.add_argument('-a', '--animate', action='store',
         required=False, type=int, default=0,
