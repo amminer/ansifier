@@ -4,12 +4,13 @@ bare minimum smoke test
 """
 
 
-import os
-from subprocess import run, PIPE
+from io import StringIO
+from contextlib import redirect_stdout
+
+from ansifier.ansifier import ImageFilePrinter
 
 
 TEST_IMAGE_PATH = 'images-examples/catClout.png'
-SCRIPT_PATH = 'ansifier.py'
 
 
 def test_prints_to_stdout():
@@ -17,6 +18,11 @@ def test_prints_to_stdout():
     Checks that something was written to stdout
     DOES NOT check output for correctness otherwise
     """
-    proc = run([SCRIPT_PATH, TEST_IMAGE_PATH], stdout=PIPE, stdin=PIPE)
-    assert proc.stdout
+    captured_output = StringIO()
+    printer = ImageFilePrinter(TEST_IMAGE_PATH)
+
+    with redirect_stdout(captured_output):
+        printer.print_text()
+
+    assert captured_output.getvalue()
 
