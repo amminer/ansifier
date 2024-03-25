@@ -22,7 +22,7 @@ but plans are being made to add HTML/CSS output and potentially other formats.
 
 ## 🛠 Prerequisites <a name = "prereqs"></a>
 
-Python 3.10 and higher *should* work. Older versions of Python *may* work.
+Python 3.10 and higher *should* work. Older versions of Python 3 *may* work.
 3.9 is especially likely to be okay, but extensive testing has not been done.
 
 `ansifier`'s ANSI-escaped output *should* work as intended on any modern terminal with
@@ -51,6 +51,11 @@ output from a subprocess. See the Usage section for more details on the CLI.
 ## 📦 Installation <a name = "installation"></a>
 
 This package is on PyPi! Simply `pip install ansifier` and you should be good to go.
+
+You're also more than welcome to clone or download the source, which includes
+development environment stuff such as tests and build configuration, if that suits
+your needs. The development environment assumes that you're running linux,
+and that your python is python3.
 
 
 ## 🕹️ Usage <a name="usage"></a>
@@ -121,6 +126,6 @@ all those image scaling algorithms
 * [colorama](https://github.com/tartley/colorama) for dealing with Windows nonsense
   so I don't have to 😄
 * [pytest](https://docs.pytest.org/en/8.0.x/), my beloved
-* [angr]('https://github.com/angr/angr') for teaching me how to structure a python package by example
+* [angr](https://github.com/angr/angr) for teaching me how to structure a python package by example
   (and, on a mostly unrelated note, for creating one of my current favorite pieces of software)
 * [this cool webpage](https://stevenacoffman.github.io/homoglyphs/) that I used to generate the title of this document
