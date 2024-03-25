@@ -5,6 +5,7 @@
 - [About](#about)
 - [Prerequisites](#prereqs)
 - [Installation](#installation)
+- [Usage](#usage)
 - [Authors](#authors)
 - [Built Using](#built_using)
 - [Acknowledgements](#acknowledgements)
@@ -43,35 +44,36 @@ disagreeable to `ansifier`'s emissions.
 
 This package is on PyPi! Simply `pip install ansifier` and you should be good to go.
 
-* clone this repository
-* create and activate a virtual environment
-* use pip to install the packages in requirements.txt
-  * to run tests, install requirements_dev.txt instead
+## 🕹️ Usage <a name="usage"></a>
 
-If you cloned the repository to somewhere on your PYTHONPATH, you should be able to use it
-like so:
+From python in the environment you `pip install`ed, you can run ansifier as the main module
+i.e. `python -m ansifier` to access the command-line interface. The CLI takes an
+extensive array of arguments which are pretty thoroughly documented in the --help output.
+More detailed external documentation is in the works, but for now this should be plenty
+to get anyone up and running.
 
-```py
-from ansifier import ImageFilePrinter
-p = ImageFilePrinter('path/to/an/image.file')
-p.print_text()
-p.save_file('path/to/output.file')
-```
+Note that the CLI provides a `-m/--meofetch` flag. If you want to use this you
+have to have neofetch installed and on your `PATH` so the script can get its
+output from a subprocess.
+
+To use ansifier programatically, you can `from ansifier import ImageFilePrinter`.
+More detailed external documentation is in the works, but for now take a look at
+the docstrings of the ImageFilePrinter class for a comprehensive explanation of how the class
+is intended to be used, and how you might hack it up in ways that are only somewhat intended.
+
+The CLI takes one argument for each parameter that ImageFilePrinter.\_\_init\_\_ takes,
+plus a few more.
+
+This video is also a little out of date, but - forgive me, for now. I'll update it soon
+to reflect the new streamlined installation and usage process
+(and the new less silly naming scheme).
 
 https://github.com/amminer/ansifier/assets/107884857/3ceab1fb-dbf5-44ef-9421-5e42a34cee66
 
-You can also run the script located in the package's root, `image_printer_go_brrr.py`,
-which takes a file path as its only required argument as well as many
-optional arguments to modify the output or save it to a file.
-The script offers a command-line flag or argument for every feature that ImageFilePrinter
-takes on initialization, as well as a few extra options for added convenience.
-The --help output is pretty thorough.
-I recommend linking to this script somewhere on your path or using a shell alias - I
-personally use the script to preview images when I'm looking around my filesystems.
-
-Note that, for every level of resource load on every different stack, there is a different
+Finally, note that for every level of resource load on every different stack, there is a different
 upper bound on the output size and a lower bound on the delay between frames for printing
-the output derived from animated .gif files to the terminal. This bottleneck appears to
+the output derived from animated .gif files to the terminal. Outside of these bounds, animations
+will get choppy or stutter. This bottleneck appears to
 be at the terminal emulator layer. I'm always exploring options to improve performance,
 but it's possible that there's a fundamental limitation here depending on your environment.
 
