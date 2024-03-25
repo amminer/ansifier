@@ -7,11 +7,11 @@ bare minimum smoke test
 import os
 from logging import DEBUG
 
-from ansifier import ImageFilePrinter, PACKAGE_ROOT
+from ansifier.ansifier import ImageFilePrinter
 
 
-TEST_IMAGE_PATH = os.path.join(PACKAGE_ROOT, 'images-examples/catClout.png')
-LOG_PATH = os.path.join(PACKAGE_ROOT, 'tests/temp.log')
+TEST_IMAGE_PATH = 'images-examples/catClout.png'
+LOG_PATH = 'tests/temp.log'
 
 
 def test_logging():

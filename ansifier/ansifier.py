@@ -20,16 +20,16 @@ import logging
 from logging.handlers import RotatingFileHandler
 import re
 import signal
-import sys
 
 from PIL import Image
 from colorama import just_fix_windows_console
 from os import path, access, R_OK, W_OK
 from shutil import get_terminal_size
+from sys import exit
 from time import sleep
 
 
-from config import CHARS, LOG_FILENAME, RESIZE_OPTIONS, LOG_LEVEL
+from ansifier.config import CHARS, LOG_FILENAME, RESIZE_OPTIONS, LOG_LEVEL
 
 
 # A couple of useful functions for hacking up ImageFilePrinter.output
@@ -43,6 +43,10 @@ def length_after_processing(text):
     processed_text = remove_ansi_escape_sequences(text)
     return len(processed_text)
 
+
+# classes, main class for export is ImageFilePrinter,
+# inherits from AnsifierBase,
+# uses Cells to convert image pixels to output
 
 class AnsifierBase():
     """
@@ -296,7 +300,7 @@ class ImageFilePrinter(AnsifierBase):
             it takes to perform the output i.e. actual delay between frames
             may be longer depending on output dimensions, hardware, terminal
             emulator, etc.
-            It is advisable to set this value to some factor of your monitor's
+            It may be advisable to set this value to a factor of your monitor's
             refresh rate to avoid your monitor catching ansifier mid-print.
         """
         self.logger = None

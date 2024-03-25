@@ -8,11 +8,11 @@ import os
 import pytest
 from PIL import Image
 
-from ansifier import ImageFilePrinter, PACKAGE_ROOT
+from ansifier.ansifier import ImageFilePrinter
 
 
-TEST_IMAGE_PATH = os.path.join(PACKAGE_ROOT, 'images-examples/catClout.png')
-TEST_GIF_PATH = os.path.join(PACKAGE_ROOT, 'images-examples/hmmm.gif')
+TEST_IMAGE_PATH = 'images-examples/catClout.png'
+TEST_GIF_PATH = 'images-examples/hmmm.gif'
 
 
 def test_can_consume_ImageFilePrinter():

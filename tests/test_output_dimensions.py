@@ -8,11 +8,11 @@ Could use inheritance for test classes but would probably be overwrought
 import os
 from unittest import TestCase
 
-from ansifier import ImageFilePrinter, PACKAGE_ROOT
+from ansifier.ansifier import ImageFilePrinter
 
 
 class TestSquare(TestCase):
-    image_path = os.path.join(PACKAGE_ROOT, 'images-examples/catSwag.png')
+    image_path = 'images-examples/catSwag.png'
 
     def test_width_square(self):
         """ 
@@ -32,7 +32,7 @@ class TestSquare(TestCase):
 
 
 class TestWide(TestCase):
-    image_path = os.path.join(PACKAGE_ROOT, 'images-examples/loaf.gif')
+    image_path = 'images-examples/loaf.gif'
 
     def test_width_wide(self):
         """ 
@@ -52,7 +52,7 @@ class TestWide(TestCase):
 
 
 class TestTall(TestCase):
-    image_path = os.path.join(PACKAGE_ROOT, 'images-examples/miku.gif')
+    image_path = 'images-examples/miku.gif'
 
     def test_width_tall(self):
         """ 
