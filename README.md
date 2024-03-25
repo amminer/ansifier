@@ -58,7 +58,7 @@ To use `ansifier` programatically, you can `from `ansifier` import ImageFilePrin
 Take a look at the docstring of the `ImageFilePrinter` class for how the class
 is intended to be used, and how you might hack it up in ways that are only somewhat intended.
 
-The CLI takes one argument for each parameter that `ImageFilePrinter.\_\_init\_\_` takes,
+The CLI takes one argument for each parameter that `ImageFilePrinter.__init__` takes,
 plus a few more. The exception is the array of characters which an `ImageFilePrinter` instance
 chooses from while converting an image to text - right now this is fully configurable except that
 the CLI lacks an argument for it, but it's pretty high on my priority list to add this.

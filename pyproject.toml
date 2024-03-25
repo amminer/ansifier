@@ -9,7 +9,7 @@ include = [
 
 [project]
 name = "ansifier"
-version = "0.0.5"
+version = "0.0.6"
 authors = [
   { name="Amelia Miner", email="ameliamminer@gmail.com" },
 ]
