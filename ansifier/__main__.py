@@ -159,7 +159,7 @@ def get_parser():
 
     argparser.add_argument('-L', '--loop-infinitely', action='store_true',
         required=False, default=False,
-        help='With -a --animage, causes the animation to loop until the '
+        help='With -a, causes the animation to loop until the '
         'program is terminated.')
 
     argparser.add_argument('-b', '--char-by-brightness', action='store_true',
@@ -191,7 +191,7 @@ def get_parser():
                 'with neofetch system info, with some padding.\n'
                 'if the terminal isn\'t large enough, neofetch lines may be '
                 'trimmed from the bottom, and/or the ansi image may not display.\n'
-                'Note that the --animate option has no effect here.'
+                'Note that the --animate option has no effect here. '
                 'Note that using --center-horizontally in this context is '
                 'discouraged.\n'
                 'Finally, note that --max-width and --max-height may only reduce '
