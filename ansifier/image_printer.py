@@ -29,11 +29,7 @@ from shutil import get_terminal_size
 from time import sleep
 
 
-# TODO sort this out... python why are you like this
-try:
-    from config import CHARS, LOG_FILENAME, RESIZE_OPTIONS, LOG_LEVEL
-except ModuleNotFoundError:
-    from .config import CHARS, LOG_FILENAME, RESIZE_OPTIONS, LOG_LEVEL
+from config import CHARS, LOG_FILENAME, RESIZE_OPTIONS, LOG_LEVEL
 
 
 # A couple of useful functions for hacking up ImageFilePrinter.output
