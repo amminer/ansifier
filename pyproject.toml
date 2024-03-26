@@ -9,13 +9,13 @@ include = [
 
 [project]
 name = "ansifier"
-version = "0.0.7"
+version = "0.0.9"
 authors = [
   { name="Amelia Miner", email="ameliamminer@gmail.com" },
 ]
 description = "A python package to represent static & animated images as text"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
