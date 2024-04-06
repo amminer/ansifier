@@ -333,7 +333,6 @@ def meofetch(args):
         ansi_lines = ansi_art.split('\n')[:-1]
         max_ansi_line_len = max(list(map(length_after_processing, ansi_lines)))
         if args.center_horizontally and w > max_ansi_line_len+1:
-            print('centering h')
             ansi_lines = [' ' * ((w - max_ansi_line_len) // 2) + l for l in ansi_lines]
             ansi_art += '\n'
         # pad left
