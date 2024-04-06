@@ -135,7 +135,7 @@ def run_cli(args=None):
                         frame, width, line_len)
             else:
                 image_printer.output = center_frame_horizontally(
-                        image_printer.output, line_len)
+                        image_printer.output, width, line_len)
         else:
             pass  # meofetch handles this
 
