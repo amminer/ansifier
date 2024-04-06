@@ -326,7 +326,7 @@ def meofetch(args):
     print(os.popen('setterm --linewrap on').read(), end='')
 
 
-def cli_main():
+def ansifier_cli_main():
     try:
         args = get_args()
         if args.version:
@@ -342,5 +342,5 @@ def cli_main():
         exit(1)
 
 if __name__ == "__main__":
-    cli_main()
+    ansifier_cli_main()
 
