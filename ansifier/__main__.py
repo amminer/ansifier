@@ -171,7 +171,7 @@ def get_parser():
         'that will fit within the terminal calling this program.')
 
     argparser.add_argument('-v', '--version', action='store_true',
-        required=False, default=False, help='print semantic version and exit')
+        required=False, default=False, help='print version information and exit')
 
     argparser.add_argument('-H', '--max-height', action='store', type=int,
         required=False, default=None,
@@ -239,14 +239,12 @@ def get_parser():
     argparser.add_argument('-z', '--center-horizontally', action='store_true',
         required=False, default=False,
         help='Use terminal size to center output horizontally. Only affects '
-            'stdout, does not affect saved file contents if any, does not '
-            'work on animated gifs')
+            'stdout, does not affect saved file contents if any')
 
     argparser.add_argument('-V', '--center-vertically', action='store_true',
         required=False, default=False,
         help='Use terminal size to center output vertically. Only affects '
-            'stdout, does not affect saved file contents if any, does not '
-            'work on animated gifs')
+            'stdout, does not affect saved file contents if any')
 
     argparser.add_argument('-m', '--meofetch', action='store_true',
             required=False, default=False,
