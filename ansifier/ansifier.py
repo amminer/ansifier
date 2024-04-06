@@ -493,7 +493,6 @@ class ImageFilePrinter(AnsifierBase):
     def _register_sigint_handler(self):
         """
         prints an ansi reset before doing the usual thing
-        this works from source code but not from an installed wheel :|
         """
         def handler(signum, frame):
             print(ImageFilePrinter.reset_escape, end='')
