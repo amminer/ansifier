@@ -21,7 +21,8 @@ and potentially other formats.
 
 ## 🛠 Prerequisites <a name = "prereqs"></a>
 
-You must have Python 3.8 or newer.
+Python 3.8 and higher have been tested, with most extensive testing on python 3.10.
+Older versions of Python 3 *may* work.
 
 Output *should* work as intended on any modern terminal with
 true color support, and *may* work on terminals without this support,
