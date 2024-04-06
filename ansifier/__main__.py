@@ -3,9 +3,10 @@
 
 import argparse
 import os
+from importlib.metadata import version
 from shutil import get_terminal_size
 from subprocess import check_output
-from importlib.metadata import metadata
+from sys import version_info
 
 from ansifier.ansifier import ImageFilePrinter, length_after_processing
 from ansifier.config import CHARS, RESIZE_OPTIONS
@@ -120,7 +121,7 @@ def get_parser():
         'character. By default, the image is scaled to the maximum dimensions '
         'that will fit within the terminal calling this program.')
 
-    argparser.add_argument('-V', '--version', action='store_true',
+    argparser.add_argument('-v', '--version', action='store_true',
         required=False, default=False, help='print semantic version and exit')
 
     argparser.add_argument('-H', '--max-height', action='store', type=int,
@@ -192,7 +193,7 @@ def get_parser():
             'stdout, does not affect saved file contents if any, does not '
             'work on animated gifs')
 
-    argparser.add_argument('-v', '--center-vertically', action='store_true',
+    argparser.add_argument('-V', '--center-vertically', action='store_true',
         required=False, default=False,
         help='Use terminal size to center output vertically. Only affects '
             'stdout, does not affect saved file contents if any, does not '
@@ -216,14 +217,15 @@ def get_parser():
         #help='if this flag is set, disallow whitespace '
             #'(completely transparent blocks) in output.')
 
-    argparser.add_argument('image_path')
+    argparser.add_argument('image_path', nargs='?', default=None)
 
     return argparser
 
 
-def get_args():
+def get_args(argparser=None):
     """ returns an argparser.args """
-    argparser = get_parser()
+    if argparser is None:
+        argparser = get_parser()
     args = argparser.parse_args()
     return args
 
@@ -328,11 +330,16 @@ def meofetch(args):
 
 def ansifier_cli_main():
     try:
-        args = get_args()
+        parser = get_parser()
+        args = get_args(parser)
         if args.version:
-            print(metadata.version('ansifier'))
+            print('ansifier', version('ansifier'), 'from',
+                os.path.dirname(__file__),
+                f'(python {version_info[0]}.{version_info[1]})')
             exit(0)
-        elif args.meofetch:
+        elif args.image_path is None:
+            parser.error('the following arguments are required: image_path')
+        if args.meofetch:
             meofetch(args)
         else:
             image_printer = run_cli()
