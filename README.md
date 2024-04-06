@@ -47,8 +47,8 @@ This package is on PyPi - my first ever! `pip install ansifier` and you should b
 
 ## 🕹️ Usage <a name="usage"></a>
 
-`ansifier` or `python -m ansifier` exposes a command-line interface. The CLI takes an
-extensive array of arguments which are pretty thoroughly documented in the `--help` output.
+In your preferred shell, running `ansifier` or `python -m ansifier` exposes a command-line interface.
+The CLI takes an extensive array of arguments which are pretty thoroughly documented in the `--help` output.
 
 ```txt
 usage: ansifier [-h] [-v] [-H MAX_HEIGHT] [-W MAX_WIDTH] [-c LIMIT_HIGH_CHARS]
