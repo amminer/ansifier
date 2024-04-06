@@ -5,6 +5,7 @@ import argparse
 import os
 from shutil import get_terminal_size
 from subprocess import check_output
+from importlib.metadata import metadata
 
 from ansifier.ansifier import ImageFilePrinter, length_after_processing
 from ansifier.config import CHARS, RESIZE_OPTIONS
@@ -73,12 +74,21 @@ def run_cli(args=None):
     height = sz.lines
     line_len = length_after_processing(image_printer.output.split('\n')[0])
 
+    def center_frame_horizontally(frame, line_len):
+        frame = '\n'.join(
+            [' ' * ((width - line_len) // 2) + l\
+            for l in frame.split('\n')][:-1])
+        frame += '\n'
+
     if args.center_horizontally and width > line_len+1:
         if not args.meofetch:
-            image_printer.output = '\n'.join(
-                [' ' * ((width - line_len) // 2) + l\
-                for l in image_printer.output.split('\n')][:-1])
-            image_printer.output += '\n'
+            if args.animate:
+                for i, frame in enumerate(image_printer.frames):
+                    frame[i] = center_frame_horizontally(
+                            frame[i], line_len)
+            else:
+                image_printer.output = center_frame_horizontally(
+                        image_printer.output, line_len)
         else:
             pass  # meofetch handles this
 
@@ -109,6 +119,9 @@ def get_parser():
         'on the transparency of the region of the image represented by that '
         'character. By default, the image is scaled to the maximum dimensions '
         'that will fit within the terminal calling this program.')
+
+    argparser.add_argument('-V', '--version', action='store_true',
+        required=False, default=False, help='print semantic version and exit')
 
     argparser.add_argument('-H', '--max-height', action='store', type=int,
         required=False, default=None,
@@ -313,10 +326,13 @@ def meofetch(args):
     print(os.popen('setterm --linewrap on').read(), end='')
 
 
-if __name__ == "__main__":
+def cli_main():
     try:
         args = get_args()
-        if args.meofetch:
+        if args.version:
+            print(metadata.version('ansifier'))
+            exit(0)
+        elif args.meofetch:
             meofetch(args)
         else:
             image_printer = run_cli()
@@ -324,4 +340,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
         exit(1)
+
+if __name__ == "__main__":
+    cli_main()
 
