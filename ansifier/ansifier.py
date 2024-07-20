@@ -63,6 +63,8 @@ class AnsifierBase():
             may raise TypeError
         2. len(chars) >=1
             may raise ValueError
+        3. each element of chars has len == 1
+            may raise ValueError
         """
         error_t = None
         error_message = None
@@ -77,9 +79,17 @@ class AnsifierBase():
             error_message = f'char list must have 1 or more element(s), '\
                 f'but {__class__} received {chars}'
 
+        elif not all(len(char) == 1 for char in chars):
+            error_t = ValueError
+            error_message = f'char list must be composed of 1-length elements, '\
+                f'but {__class__} received {chars}'
+
+
         if error_t is not None:
             self.logger.error(error_message)
-            raise TypeError(error_message)
+            raise error_t(error_message)
+        else:
+            self.logger.info(f'charset: {chars}')
 
 
     def _validate_int(self, i_to_check, minimum=0, message=None):
@@ -145,7 +155,6 @@ class Cell(AnsifierBase):
 
         if chars is None:
             chars = CHARS
-        #self._validate_char_list(chars)  # TODO how does this affect performance?
         self.chars = chars
         self.intervals = [255/len(self.chars)*i
                           for i in range(len(self.chars)-1, -1, -1)]

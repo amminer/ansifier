@@ -71,19 +71,26 @@ def run_cli(args=None):
     May save ImageFilePrinter.output to a file if instructed
     DOES NOT print the text to the terminal;
     """
-    global CHARS
     global RESIZE_OPTIONS
-    NUM_CHARS = len(CHARS)
 
     if args is None:
         args = get_args()
     
+    charset = list(args.charset)
+    if len(charset) < 2:
+        print('error: need at least 2 characters for a custom charset'
+            f'see `ansifier -h`.')
+        exit(1)
+
+
+    NUM_CHARS = len(charset)
+
     resize_method = None
     try:
         resize_method = RESIZE_OPTIONS[args.resize_method][0]
     except KeyError:
         print('error: bad value passed to resize_method switch; '
-            f'see `{__file__} -h`.')
+            f'see `ansifier -h`.')
         exit(1)
     limit = args.limit_high_chars
     negative_limit = args.limit_low_chars
@@ -91,17 +98,17 @@ def run_cli(args=None):
 
     if limit + negative_limit >= NUM_CHARS - 1:
         print(f'error: total of character limit arguments must be < '
-            f'{NUM_CHARS-1} to get any visible output; see `{__file__} -h`.')
+            f'{NUM_CHARS-1} to get any visible output; see `ansifier -h`.')
         exit(1)
-    CHARS = CHARS[limit:]
+    charset = charset[limit:]
     if negative_limit != 0:
-        CHARS = CHARS[:-1*negative_limit - 1]
-        CHARS.append(' ')
+        charset = charset[:-1*negative_limit - 1]
+        charset.append(' ')
     if args.invert:
-        CHARS = CHARS[-1::-1]
+        charset = charset[-1::-1]
     #if args.no_whitespace:
-        #CHARS.remove(' ')
-    #INTERVALS = [255/len(CHARS)*i for i in range(len(CHARS)-1, -1, -1)]
+        #charset.remove(' ')
+    #INTERVALS = [255/len(charset)*i for i in range(len(charset)-1, -1, -1)]
     #if offset != 0:
         #INTERVALS = [i+INTERVALS[-1 - offset] for i in INTERVALS]
         #new_offset_addition = INTERVALS[-1*offset]
@@ -118,7 +125,7 @@ def run_cli(args=None):
         args.max_width,
         resize_method,
         args.char_by_brightness,
-        CHARS,
+        charset,
         args.animate,
         args.loop_infinitely)
 
@@ -181,14 +188,21 @@ def get_parser():
         required=False, default=None,
         help='Restrict output to this many columns at most; ' + cell_info_message)
 
+    argparser.add_argument('-s', '--charset', action='store', type=str,
+        required=False, default=CHARS,
+        help='character set to use instead of default. Should be a string of chars, '
+        'with the intent that characters that take up more screen space should '
+        'be at the head of the array, and less visually present characters should '
+        'be at the tail, e.x. -s \'@#&$*^- \'; don\'t forget the space!')
+
     argparser.add_argument('-c', '--limit-high-chars', action='store', type=int,
         required=False, default=0, help='remove <arg> chars from high (opaque) '
-        f'output options; Available chars are: {CHARS}')
+        f'output options; Default chars are: {CHARS}')
 
     argparser.add_argument('-C', '--limit-low-chars', action='store',
             type=int, required=False, default=0, help='remove <arg> chars '
                 f'from low (transparent) output options; preserves space char. '
-                f'Available chars are: {CHARS}')
+                f'Default chars are: {CHARS}')
 
     # TODO this is a fun idea, but tricky in combination with other options
     #argparser.add_argument('-o', '--char-offset', action='store',
@@ -196,7 +210,7 @@ def get_parser():
                 #'higher in the array of available chars, without dropping the '
                 #'space char (retains fully transparent cells). This is a WIP '
                 #'and bad values are likely to break the program. '
-                #f'Available chars are: {CHARS}')
+                #f'Default chars are: {CHARS}')
 
     readable_resize_options = {(k, v[1]) for k, v in 
         RESIZE_OPTIONS.items()}
