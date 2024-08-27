@@ -16,6 +16,7 @@ TODO/ideas for improvements not yet made into GitHub issues:
 """
 
 
+import html
 import logging
 from logging.handlers import RotatingFileHandler
 import re
@@ -39,9 +40,20 @@ def remove_ansi_escape_sequences(text):
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     return ansi_escape.sub('', text)
 
-def length_after_processing(text):
-    processed_text = remove_ansi_escape_sequences(text)
-    return len(processed_text)
+def number_of_spans_per_line(text):
+    span_pattern = re.compile(r'<span\b[^>]*>(.*?)<\/span>')
+    br = '<br/>'
+    topline = text.split(br)[0]
+    spanmatches = span_pattern.findall(topline)
+    return len(spanmatches)
+
+def length_after_processing(text, output_format='ansi-escaped'):
+    if 'ansi' in output_format:
+        processed_text = remove_ansi_escape_sequences(text).split('\n')[0]
+        ret = len(processed_text)
+    elif 'html' in output_format:
+        ret = number_of_spans_per_line(text)
+    return ret
 
 
 # classes, main class for export is ImageFilePrinter,
@@ -132,7 +144,7 @@ class Cell(AnsifierBase):
     that uses the Cell
     """
 
-    def __init__(self, pixel, from_brightness=False, chars=None):
+    def __init__(self, pixel, from_brightness=False, chars=None, output_format='ansi-escaped'):
         """
         :param pixel: tuple, of integers, length 4
             (red, green, blue, alpha) levels between 0 and 255 inclusive.
@@ -141,7 +153,13 @@ class Cell(AnsifierBase):
         :param chars: list of 1-length strings, any non-zero length
             characters that will be selected from, intended to be ordered 
             from least to most visible when printed to a terminal
+        :param output_format: str, how to convert pixel to char
+            see Cell.output_formats
         """
+        self.output_formats = {
+                'ansi-escaped': self._ansi_escaped_output,
+                'html/css': self._html_css_output
+        }
 
         if chars is None:
             chars = CHARS
@@ -153,20 +171,38 @@ class Cell(AnsifierBase):
 
         self._validate_pixel(pixel)
         self.pixel = pixel
+
+        self.output_format = output_format
         self.from_brightness = from_brightness
+        self.r = self.pixel[0]
+        self.g = self.pixel[1]
+        self.b = self.pixel[2]
+        self.a = self.pixel[3]
         self.char = self._get_char()
-        r = self.pixel[0]
-        g = self.pixel[1]
-        b = self.pixel[2]
-        self.color_escape = f"\033[38;2;{r};{g};{b}m" 
 
 
     def __str__(self):
         # assume a terminal character is about twice as tall as it is wide
+        output_function = self.output_formats[self.output_format]
+        return output_function()
+
+    def _ansi_escaped_output(self):
+        color_escape = f"\033[38;2;{self.r};{self.g};{self.b}m" 
         if self.char == ' ':  # no need to color-escape transparent cells
             ret = self.char * 2
         else:
-            ret = self.color_escape + self.char * 2
+            ret = color_escape + self.char * 2
+        return ret
+
+    def _html_css_output(self):
+        html_escaped_char = html.escape(self.char)
+        if self.char == ' ':  # no need to color transparent cells
+            ret = '&nbsp;' * 2  # html.escape does not handle spaces...
+            # may run into more trouble with other characters
+        # may need to deal with other escapes
+        else:
+            color_char = f'<span style="color: rgba({self.r},{self.g},{self.b},{self.a})">{html_escaped_char}</span>' 
+            ret = color_char * 2
         return ret
 
 
@@ -201,6 +237,19 @@ class Cell(AnsifierBase):
             raise TypeError(error_message)
 
 
+    def _validate_output_format(self, output_format):
+        error_t = None
+        error_message = None
+        if not output_format in self.output_formats:
+            error_t = ValueError
+            error_message = f'{output_format} is not an implemented output format, '\
+                f'try one of these: {list(self.output_formats.keys())}'
+        if error_t is not None:
+            self.logger.error(error_message)
+            raise error_t(error_message)
+
+
+
     def _get_char(self):
         if self.from_brightness:
             return self._get_char_from_brightness()
@@ -223,13 +272,12 @@ class Cell(AnsifierBase):
     def _get_char_from_alpha(self):
         """ use transparency to determine char """
         char = None
-        a = self.pixel[3]
         for i, interval in enumerate(self.intervals):
-            if a >= interval:
+            if self.a >= interval:
                 char = self.chars[i]
                 break
 
-        if a < 20:  # prevent weird artifacting from resize...
+        if self.a < 20:  # prevent weird artifacting from resize...
             char = ' '
 
         return char
@@ -271,13 +319,16 @@ class ImageFilePrinter(AnsifierBase):
     """
 
     reset_escape = "\033[38;2;255;255;255m"
+    html_opening_tags = '<html><body style="font-family: monospace">'
+    html_closing_tags = '</body></html>'
 
     def __eq__(self, other) :
         return self.__dict__ == other.__dict__
 
     def __init__(self, image_path, max_height=None, max_width=None,
             resize_method=Image.LANCZOS, char_by_brightness=False, 
-            chars=CHARS, animate=0, loop_infinitely=False, logfile=None):
+            chars=CHARS, animate=0, loop_infinitely=False, output_format="ansi-escaped",
+            logfile=None):
         """
         :param image_path: str, path to image to represent as text.
             Supported image formats are those supported by PIL version 9
@@ -302,6 +353,10 @@ class ImageFilePrinter(AnsifierBase):
             emulator, etc.
             It may be advisable to set this value to a factor of your monitor's
             refresh rate to avoid your monitor catching ansifier mid-print.
+        :param loop_infinitely: bool, whether to wait for keyboardinterrupt
+            to stop animating
+        :param logfile: str, where to store log file
+        :param output_format: str, defaults to "ansi-escaped", see ImageFilePrinter.output_formats
         """
         self.logger = None
         if logfile is None:
@@ -356,6 +411,9 @@ class ImageFilePrinter(AnsifierBase):
         self.logger.debug(f'working with these intervals: {self.intervals} '
             '(len {len(self.intervals)})')
 
+        Cell((0,0,0,0))._validate_output_format(output_format)
+        self.output_format = output_format
+
         if max_height is None or max_width is None:
             self.logger.debug('Getting terminal dimensions')
         if max_height is None:
@@ -394,7 +452,6 @@ class ImageFilePrinter(AnsifierBase):
             #sys.stdout.write(self.output)
             #sys.stdout.flush()  # TODO this might be marginally faster
             print(self.output, end='')
-        print(ImageFilePrinter.reset_escape, end='')
 
 
     def _print_animated(self):
@@ -475,7 +532,7 @@ class ImageFilePrinter(AnsifierBase):
             self.output = self._convert_image_to_string(
                 self._prepare_for_dump(self.image_object))
         self.output_width = length_after_processing(
-            self.output[:self.output.index('\n')])
+            self.output, self.output_format)
         self.output_height = self.output.count('\n')
 
 
@@ -551,12 +608,31 @@ class ImageFilePrinter(AnsifierBase):
         for j in range(image.size[1]):
             for i in range(image.size[0]):
                 pix = image.getpixel((i, j))
-                cell = Cell(pix, self.char_by_brightness, self.chars)
+                cell = Cell(pix, self.char_by_brightness, self.chars, self.output_format)
                 output += str(cell)
-            output += '\n'  # trailing newline per line, including final newline
+            output = self._finish_line(output)
+        output = self._finish_output(output)
 
         self.output = output
         self.logger.debug(f'done converting {image}')
+        return output
+
+
+    def _finish_line(self, output):
+        if 'ansi' in self.output_format:  # horrible hack, forgive me
+            output += '\n'
+        elif 'html' in self.output_format:
+            output += '<br/>'
+        return output
+
+
+    def _finish_output(self, output):
+        if 'ansi' in self.output_format:  # horrible hack, forgive me
+            output += ImageFilePrinter.reset_escape
+        elif 'html' in self.output_format:
+            output = ImageFilePrinter.html_opening_tags\
+                   + output\
+                   + ImageFilePrinter.html_closing_tags
         return output
 
 
@@ -648,6 +724,7 @@ class ImageFilePrinter(AnsifierBase):
             if log:
                 self.logger.error(error_message)
             raise error_t(error_message)
+
 
 
     @staticmethod
