@@ -17,11 +17,15 @@ from subprocess import check_output
 from sys import version_info
 
 from ansifier.ansifier import ImageFilePrinter, length_after_processing
+from ansifier.ansifier import Cell
 from ansifier.config import CHARS, RESIZE_OPTIONS
+
+output_formats = [format for format in Cell((0,0,0,0)).output_formats.keys()]
 
 
 def center_frame_horizontally(frame, width, line_len=None):
     """
+    this is only intended for use in ansi-escaped output mode
     :param frame: str, image printer output
     :param width: int, num of columns in container (terminal)
     :param line_len: int, number of characters in a line of output
@@ -39,6 +43,7 @@ def center_frame_horizontally(frame, width, line_len=None):
 
 def center_frame_vertically(frame, height, line_len=None, num_lines=None):
     """
+    this is only intended for use in ansi-escaped output mode
     :param frame: str, image printer output
     :param height: int, num of rows in container (terminal)
     :return: frame, modified to be centered based on height
@@ -113,14 +118,15 @@ def run_cli(args=None):
     #main(args.imageFilePath, args.max_height, args.max_width)
 
     image_printer = ImageFilePrinter(
-        args.image_path,
-        args.max_height,
-        args.max_width,
-        resize_method,
-        args.char_by_brightness,
-        CHARS,
-        args.animate,
-        args.loop_infinitely)
+        image_path=args.image_path,
+        max_height=args.max_height,
+        max_width=args.max_width,
+        resize_method=resize_method,
+        char_by_brightness=args.char_by_brightness,
+        chars=CHARS,
+        animate=args.animate,
+        loop_infinitely=args.loop_infinitely,
+        output_format=args.output_format)
 
     sz = get_terminal_size()
     width = sz.columns
@@ -189,6 +195,11 @@ def get_parser():
             type=int, required=False, default=0, help='remove <arg> chars '
                 f'from low (transparent) output options; preserves space char. '
                 f'Available chars are: {CHARS}')
+
+    argparser.add_argument('-F', '--output-format', action='store',
+            type=str, required=False, default='ansi-escaped', help='how to '
+                'format output text - must be one of the following:\n'
+                f'{output_formats}')
 
     # TODO this is a fun idea, but tricky in combination with other options
     #argparser.add_argument('-o', '--char-offset', action='store',
