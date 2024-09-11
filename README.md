@@ -48,6 +48,14 @@ This package is on PyPi - my first ever! `pip install ansifier` and you should b
 ## 🕹️ Usage <a name="usage"></a>
 
 In your preferred shell, running `ansifier` or `python -m ansifier` exposes a command-line interface.
+
+Here it is in action!
+
+
+https://github.com/user-attachments/assets/801ca3d9-15b5-43a5-b0cf-e53451bca7a3
+
+
+
 The CLI takes an extensive array of arguments which are pretty thoroughly documented in the `--help` output.
 
 ```txt
@@ -137,16 +145,6 @@ The CLI takes one argument for each parameter that `ImageFilePrinter.__init__` t
 plus a few more. The exception is the array of characters which an `ImageFilePrinter` instance
 chooses from while converting an image to text - right now this is fully configurable except that
 the CLI lacks an argument for it, but it's pretty high on my priority list to add this.
-
-Here it is in action! This video is a little out of date - forgive me, for now.
-I'll update it soon to reflect the new streamlined installation and usage process
-(and the new less silly naming scheme).
-
-https://github.com/amminer/ansifier/assets/107884857/3ceab1fb-dbf5-44ef-9421-5e42a34cee66
-
-I'll probably give this the ability to take URLs and put it in a cloud function at some point,
-but for now I'm a very broke grad student and I don't want to have to worry about having a
-"make me spend money" button exposed to the internet.
 
 ## 🙏 Acknowledgements  <a name = "acknowledgements"></a>
 
