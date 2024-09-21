@@ -319,7 +319,7 @@ class ImageFilePrinter(AnsifierBase):
     """
 
     reset_escape = "\033[38;2;255;255;255m"
-    html_opening_tags = '<div style="font-family: monospace">'
+    html_opening_tags = '<div style="font-family: monospace; line-height: 1.2;">'
     html_closing_tags = '</div>'
 
     def __eq__(self, other) :
