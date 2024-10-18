@@ -12,7 +12,7 @@ ansifier = "ansifier:ansifier_cli_main"
 
 [project]
 name = "ansifier"
-version = "0.0.15"
+version = "0.1.0"
 authors = [
   { name="Amelia Miner", email="ameliamminer@gmail.com" },
 ]
