@@ -1,9 +1,15 @@
+"""
+entry point for use from a shell;
+invoke this module i.e. python -m src.ansifier.cli
+"""
 # pyright: basic
 import argparse
 
 from colorama import just_fix_windows_console
+from importlib.metadata import version
+from os.path import dirname
 from shutil import get_terminal_size
-from sys import stdout
+from sys import version_info
 from time import sleep
 
 from .config import CHARLISTS
@@ -20,8 +26,8 @@ def main():
         description='Takes an image file as input and '
         'prints a unicode representation of the image to the terminal.')
 
-    #argparser.add_argument('-v', '--version', action='store_true',
-        #required=False, default=False, help='print version information and exit')
+    argparser.add_argument('-v', '--version', action='store_true',
+        required=False, default=False, help='print version information and exit')
 
     argparser.add_argument('-H', '--height', action='store', type=int,
         required=False, default=0,
@@ -79,6 +85,17 @@ def main():
     argparser.add_argument('image_path', nargs='?', default=None)
 
     args = argparser.parse_args()
+
+    if args.version:
+        print('ansifier', version('ansifier'), 'from',
+            dirname(__file__),
+            f'(python {version_info[0]}.{version_info[1]})')
+        exit(0)
+
+
+    if args.image_path is None:
+        argparser.error('the following arguments are required: image_path')
+
 
     if args.height == 0:
         args.height = get_terminal_size().lines - 1

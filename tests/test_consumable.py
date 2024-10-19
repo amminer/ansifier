@@ -5,9 +5,8 @@ bare minimum functional tests, no assertions, just run the code
 
 
 import pytest
-from PIL import Image
 
-from src.ansifier.ansify import ansify
+from ansifier.ansify import ansify
 
 
 TEST_IMAGE_PATH = 'images-examples/catClout.png'

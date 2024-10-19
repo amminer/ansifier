@@ -1,5 +1,6 @@
 """
-entry point
+Main business logic;
+import ansify to consume the package's functionality
 """
 # pyright:basic
 
@@ -49,32 +50,31 @@ def _process_image(
     chars:          list[str],
     by_intensity:   bool
 ) -> str:
-    """ takes a PIL.Image, returns a str """
+    """ see ansify() """
     image = image.convert('RGBA')
     image.thumbnail((width, height), Image.BICUBIC)  # pyright:ignore
     image_processor = FORMATS.get(output_format)
     if image_processor is None:
         raise ValueError(
             f'{output_format} is not a valid format; must be one of {list(FORMATS.keys())}')
-    pixels = (
-        image.getpixel((i, j))
-        for j in range(image.size[1]) for i in range(image.size[0]))
-    cells = (
-        image_processor.char_to_cell(
-            char_from_pixel(pixel, chars, by_intensity),    # pyright:ignore
-            pixel[0], pixel[1], pixel[2])                   # pyright:ignore
-        + (image_processor.line_break() if not i % image.size[0] else '')
-        for i, pixel in enumerate(pixels))
-    ret = image_processor.wrap_output(''.join(cells))
+    ret = ''
+    for j in range(image.size[1]):
+        for i in range(image.size[0]):
+            pixel = image.getpixel((i, j))
+            char = _char_from_pixel(pixel, chars, by_intensity)  # pyright:ignore
+            ret += image_processor.char_to_cell(char, pixel[0], pixel[1], pixel[2])  # pyright:ignore
+        ret += image_processor.line_break()
+    ret = image_processor.wrap_output(ret)
 
     return ret
 
 
-def char_from_pixel(
+def _char_from_pixel(
     pixel:          tuple[int, int, int, int],
     chars:          list[str],
     by_intensity:   bool
 ) -> str:
+    """ see ansify() """
     char = ' '
     intervals = [255/len(chars)*i for i in range(len(chars)-1, -1, -1)]
     metric = pixel[3]

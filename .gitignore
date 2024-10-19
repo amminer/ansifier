@@ -1,7 +1,7 @@
-*.log*
 .*.swp
 venv
 .pytest_cache
 *__pycache__
 dist
+*.egg-info
 .vscode

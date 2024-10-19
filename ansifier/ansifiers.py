@@ -50,9 +50,11 @@ class HtmlImageParser(ImageParser):
     @staticmethod
     def char_to_cell(char: str, r: int, g: int, b: int) -> str:
         char = escape(char)
-        # html.escape does not handle spaces...
-        char = '&nbsp;' if char == ' ' else char
-        return f'<span style="color: rgb({r},{g},{b})">{char*2}</span>' 
+        if char == ' ':
+            char = '&nbsp;'  # html.escape does not handle spaces...
+            return f'<span>{char*2}</span>' 
+        else:
+            return f'<span style="color: rgb({r},{g},{b})">{char*2}</span>' 
 
     @staticmethod
     def line_break() -> str:

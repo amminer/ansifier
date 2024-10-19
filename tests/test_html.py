@@ -1,6 +1,6 @@
 from difflib import SequenceMatcher
 
-from src.ansifier.ansify import ansify
+from ansifier.ansify import ansify
 
 
 TEST_IMAGE_PATH = 'images-examples/catClout.png'
