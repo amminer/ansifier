@@ -1,0 +1,119 @@
+# pyright: basic
+import argparse
+
+from colorama import just_fix_windows_console
+from shutil import get_terminal_size
+from sys import stdout
+from time import sleep
+
+from .config import CHARLISTS
+from .ansifiers import FORMATS
+from .ansify import ansify
+
+
+output_formats = list(FORMATS.keys())
+
+
+def main():
+    argparser = argparse.ArgumentParser(
+        prog='ansifier',
+        description='Takes an image file as input and '
+        'prints a unicode representation of the image to the terminal.')
+
+    #argparser.add_argument('-v', '--version', action='store_true',
+        #required=False, default=False, help='print version information and exit')
+
+    argparser.add_argument('-H', '--height', action='store', type=int,
+        required=False, default=0,
+        help='Restrict output to this many rows. '
+             'By default, restricts output to the height of the calling shell\'s terminal, '
+             'minus one to account for the prompt line. Multiline prompts not yet considered.')
+
+    argparser.add_argument('-W', '--width', action='store', type=int,
+        required=False, default=0,
+        help='Restrict output to twice this many columns (it takes ~2 chars to represent a square). '
+             'By default, restricts output to the width of the calling shell\'s terminal.')
+
+    charlists = ''.join(f'"{k}": "{",".join(v)}" ' for k,v in CHARLISTS.items())
+    argparser.add_argument('-c', '--chars', action='store', type=str,
+        required=False, default=",".join(CHARLISTS["default"]), help='comma-separated sequence of characters '
+        'to be chosen from when converting regions of the image to text. Should be sorted from '
+        f'more opaque to less opaque in normal usage.'
+        f'There are a few special values for this argument: [{charlists}]')
+
+    argparser.add_argument('-F', '--output-format', action='store',
+            type=str, required=False, default=output_formats[0], help='how to '
+                'format output text - must be one of the following:\n'
+                f'{output_formats}. Default is {output_formats[0]}.')
+
+    argparser.add_argument('-a', '--animate', action='store',
+        required=False, type=int, default=0,
+        help='If the input image is animated (.gif), process all keyframes and '
+            'print them with ANIMATE milliseconds of delay between frames.')
+
+    argparser.add_argument('-L', '--loop-infinitely', action='store_true',
+        required=False, default=False,
+        help='With -a, causes the animation to loop until the '
+        'program is terminated.')
+
+    argparser.add_argument('-i', '--char-by-intensity', action='store_true',
+        required=False, default=False, help='Use intensity (instead of '
+            'transparency) to determine character used to represent an input region.')
+
+    argparser.add_argument('-I', '--invert-char-selection', action='store_true',
+        required=False, default=False,
+        help='Invert the effect of transparency (or intensity when using -i) '
+            'on char selection; useful for images with '
+            'dark foregrounds and bright backgrounds, for example.')
+
+    #argparser.add_argument('-z', '--center-horizontally', action='store_true',
+        #required=False, default=False,
+        #help='Use terminal size to center output horizontally. Only affects '
+            #'stdout, does not affect saved file contents if any')
+
+    #argparser.add_argument('-V', '--center-vertically', action='store_true',
+        #required=False, default=False,
+        #help='Use terminal size to center output vertically. Only affects '
+            #'stdout, does not affect saved file contents if any')
+
+    argparser.add_argument('image_path', nargs='?', default=None)
+
+    args = argparser.parse_args()
+
+    if args.height == 0:
+        args.height = get_terminal_size().lines - 1
+    if args.width == 0:
+        args.width = get_terminal_size().columns
+
+    if args.chars in CHARLISTS.keys():
+        args.chars = CHARLISTS[args.chars]
+    else:
+        args.chars=list(args.chars.split(','))
+
+    if args.invert_char_selection:
+        args.chars = args.chars[-1::-1]
+
+
+    just_fix_windows_console()
+    output = ansify(
+        args.image_path,
+        chars=args.chars,
+        height=args.height,
+        width=args.width,
+        by_intensity=args.char_by_intensity,
+        output_format=args.output_format,
+        animate=args.animate)
+    interval = args.animate/1000.0
+    done = False
+    loop = args.loop_infinitely
+    while not done:
+        for frame in output:
+            print(frame, end='')
+            sleep(interval)
+        if not loop:
+            done = True
+    print()
+
+
+if __name__ == '__main__':
+    main()

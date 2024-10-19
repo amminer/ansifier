@@ -4,7 +4,7 @@ from src.ansifier.ansify import ansify
 
 
 TEST_IMAGE_PATH = 'images-examples/catClout.png'
-expected_output_file = 'tests/expected.html'
+expected_output_file = 'tests/expected.txt'
 with open(expected_output_file, 'r') as rf:
     expected_output = rf.read()
 
@@ -15,9 +15,10 @@ def test_html_output():
     DOES NOT check output for correctness otherwise
     """
         
-    observed_output = ansify(TEST_IMAGE_PATH, output_format='html/css', height=20)[0]
+    observed_output = ansify(TEST_IMAGE_PATH, output_format='ansi-escaped', height=20)[0]
 
-    sequence_matcher = SequenceMatcher(a=expected_output, b=observed_output)
-    print(f'output matches {sequence_matcher.ratio() * 100}%')
+    print(f'output matches {SequenceMatcher(a=expected_output, b=observed_output).ratio() * 100}%')
+    print(f'expected\n{expected_output}')
+    print(f'observed\n{observed_output}')
     assert observed_output == expected_output
 
