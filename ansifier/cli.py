@@ -4,6 +4,7 @@ invoke this module i.e. python -m src.ansifier.cli
 """
 # pyright: basic
 import argparse
+import re
 
 from colorama import just_fix_windows_console
 from importlib.metadata import version
@@ -79,15 +80,13 @@ def main():
             'on char selection; useful for images with '
             'dark foregrounds and bright backgrounds, for example.')
 
-    #argparser.add_argument('-z', '--center-horizontally', action='store_true',
-        #required=False, default=False,
-        #help='Use terminal size to center output horizontally. Only affects '
-            #'stdout, does not affect saved file contents if any')
+    argparser.add_argument('-z', '--center-horizontally', action='store_true',
+        required=False, default=False,
+        help='Use terminal size to center output horizontally, for ansi-escaped output only')
 
-    #argparser.add_argument('-V', '--center-vertically', action='store_true',
-        #required=False, default=False,
-        #help='Use terminal size to center output vertically. Only affects '
-            #'stdout, does not affect saved file contents if any')
+    argparser.add_argument('-V', '--center-vertically', action='store_true',
+        required=False, default=False,
+        help='Use terminal size to center output vertically, for ansi-escaped output only')
 
     argparser.add_argument('image_path', nargs='?', default=None)
 
@@ -102,10 +101,12 @@ def main():
     if args.image_path is None:
         argparser.error('the following arguments are required: image_path')
 
+    terminal_height = get_terminal_size().lines
+    terminal_width = get_terminal_size().columns
     if args.height == 0:
-        args.height = get_terminal_size().lines - 1
+        args.height = terminal_height - 1
     if args.width == 0:
-        args.width = get_terminal_size().columns
+        args.width = terminal_width
 
     if args.chars in CHARLISTS.keys():
         args.chars = CHARLISTS[args.chars]
@@ -126,13 +127,38 @@ def main():
         input_format=args.input_format,
         output_format=args.output_format,
         animate=args.animate)
+
+    if args.output_format == output_formats[0]\
+    and args.center_horizontally or args.center_vertically:
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')  # TODO don't *need* re
+
+        for i, frame in enumerate(output):
+            if args.center_horizontally:
+                lines = frame.split('\n')
+                for j, line in enumerate(lines):
+                    output_width = len(ansi_escape.sub('', output[i].split('\n')[0]))
+                    while output_width + 4 <= terminal_width:
+                        line = '  ' + line + '  '
+                        lines[j] = line
+                        output_width += 4
+                frame = '\n'.join(lines)
+                output[i] = frame
+
+            if args.center_vertically:
+                output_height = frame.count('\n')
+                while output_height + 2 <= terminal_height - 1:
+                    frame = '\n' + frame + '\n'
+                    output_height += 2
+                output[i] = frame
+
+
     interval = args.animate/1000.0
     done = False
     loop = args.loop_infinitely
     while not done:
         for frame in output:
             print(frame, end='')
-            sleep(interval)  # TODO account for processing time
+            sleep(interval)  # TODO account for print overhead
         if not loop:
             done = True
     print()
