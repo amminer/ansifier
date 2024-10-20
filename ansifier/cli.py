@@ -50,7 +50,7 @@ def main():
         f'There are a few special values for this argument: [{charlists}]')
 
     argparser.add_argument('-f', '--input-format', action='store',
-            type=str, required=False, default=input_formats[0], help='mimetype of file being '
+            type=str, required=False, default='', help='mimetype of file being '
                 'provided as input; must be one of the following: '
                 f'{input_formats}. By default, tries to guess, falling back on {input_formats[0]}.')
 
@@ -99,10 +99,8 @@ def main():
             f'(python {version_info[0]}.{version_info[1]})')
         exit(0)
 
-
     if args.image_path is None:
         argparser.error('the following arguments are required: image_path')
-
 
     if args.height == 0:
         args.height = get_terminal_size().lines - 1
@@ -134,7 +132,7 @@ def main():
     while not done:
         for frame in output:
             print(frame, end='')
-            sleep(interval)
+            sleep(interval)  # TODO account for processing time
         if not loop:
             done = True
     print()

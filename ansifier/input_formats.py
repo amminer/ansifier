@@ -9,26 +9,28 @@ into a list of PIL images
 # pyright: basic
 
 # TODO
-# * local videos
 # * image URLs
 # * youtube links
 
 
 from abc import ABC, abstractmethod
 from typing import BinaryIO
+
 from PIL import Image
 from PIL.ImageFile import ImageFile
+
+from cv2 import VideoCapture, cvtColor, COLOR_BGR2RGB
 
 
 class InputFormat(ABC):
     @staticmethod
     @abstractmethod
-    def open(filepath: str) -> BinaryIO|ImageFile|None:
+    def open(filepath: str) -> VideoCapture|ImageFile|None:
         pass
 
     @staticmethod
     @abstractmethod
-    def yield_frames(rf: BinaryIO|ImageFile) -> ImageFile:
+    def yield_frames(rf: VideoCapture|ImageFile) -> ImageFile:
         """
         :return: one frame from the open input file per invocation until none are left
         """
@@ -37,7 +39,7 @@ class InputFormat(ABC):
 
 class ImageInput(InputFormat):
     @staticmethod
-    def open(filepath: str) -> BinaryIO|ImageFile|None: 
+    def open(filepath: str) -> VideoCapture|ImageFile|None: 
         return Image.open(filepath, 'r')
 
     @staticmethod
@@ -50,12 +52,19 @@ class ImageInput(InputFormat):
 
 class VideoInput(InputFormat):
     @staticmethod
-    def open(filepath: str) -> BinaryIO|ImageFile|None:
-        print('video TODO')
+    def open(filepath: str) -> VideoCapture:
+        return VideoCapture(filepath)
+
 
     @staticmethod
-    def yield_frames(rf: BinaryIO) -> ImageFile:
-        print('video TODO')
+    def yield_frames(rf: VideoCapture) -> ImageFile:  # pyright:ignore
+        success, bgr_frame = rf.read()
+        while success:
+            rgb_frame = cvtColor(bgr_frame, COLOR_BGR2RGB)
+            frame = Image.fromarray(rgb_frame)
+            yield frame  # pyright:ignore
+            success, bgr_frame = rf.read()
+
 
 
 INPUT_FORMATS = {

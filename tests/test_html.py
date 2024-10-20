@@ -15,7 +15,7 @@ def test_html_output():
     DOES NOT check output for correctness otherwise
     """
         
-    observed_output = ansify(TEST_IMAGE_PATH, output_format='html/css', height=20)[0]
+    observed_output = ansify(TEST_IMAGE_PATH, output_format='html/css', height=50)[0]
 
     sequence_matcher = SequenceMatcher(a=expected_output, b=observed_output)
     print(f'output matches {sequence_matcher.ratio() * 100}%')

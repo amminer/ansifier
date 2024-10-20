@@ -15,7 +15,7 @@ def test_html_output():
     DOES NOT check output for correctness otherwise
     """
         
-    observed_output = ansify(TEST_IMAGE_PATH, output_format='ansi-escaped', height=20)[0]
+    observed_output = ansify(TEST_IMAGE_PATH, output_format='ansi-escaped', height=50)[0]
 
     print(f'output matches {SequenceMatcher(a=expected_output, b=observed_output).ratio() * 100}%')
     print(f'expected\n{expected_output}')

@@ -5,7 +5,6 @@ import ansify to consume the package's functionality
 # pyright:basic
 
 
-from cv2 import VideoCapture
 from filetype import guess
 from PIL import Image
 
@@ -49,20 +48,22 @@ def ansify(
         raise ValueError(
             f'{input_format} is not a valid input format; must be one of {list(INPUT_FORMATS.keys())}')
 
-    with input_reader.open(input_file) as rf:
-        if rf is None:
-            raise(ValueError(f'unable to open {input_file}'))
+    rf = input_reader.open(input_file)
+    if rf is None:
+        raise(ValueError(f'unable to open {input_file}'))
+    for image in input_reader.yield_frames(rf):
+        ret.append(_process_frame(
+            image=image,
+            height=height,
+            width=width,
+            output_format=output_format,
+            chars=chars,
+            by_intensity=by_intensity))
+        if not animate:
+            break
+    rf_close = getattr(rf, 'close', lambda:None)
+    rf_close()
 
-        for image in input_reader.yield_frames(rf):
-            ret.append(_process_frame(
-                image=image,
-                height=height,
-                width=width,
-                output_format=output_format,
-                chars=chars,
-                by_intensity=by_intensity))
-            if not animate:
-                break
     return ret
 
 

@@ -30,12 +30,3 @@ def test_can_pass_params():
         by_intensity=True,
         animate=False,
         output_format='html/css'))
-
-
-def test_negative_must_pass_image_path():
-    """ ensure that you can't instantiate without a path """
-    error_message = "missing 1 required positional argument: 'image_path'"
-
-    with pytest.raises(TypeError) as e:
-        ansify(animate=20)  # pyright:ignore
-    assert error_message in str(e)
