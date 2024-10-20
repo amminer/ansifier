@@ -10,8 +10,10 @@ name = "ansifier"
 description = "A python package used to represent static & animated images as text"
 version = "0.1.0"
 dependencies = [
-  "Pillow>=9.0.1",
   "colorama==0.4.6"
+  "Pillow>=9.0.1",
+  "filetype>=1.2.0"
+  "opencv-python>=4.10.0.0"
 ]
 requires-python = ">=3.8"
 readme = "README.md"

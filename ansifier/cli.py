@@ -13,11 +13,13 @@ from sys import version_info
 from time import sleep
 
 from .config import CHARLISTS
-from .ansifiers import FORMATS
+from .input_formats import INPUT_FORMATS
+from .output_formats import OUTPUT_FORMATS
 from .ansify import ansify
 
 
-output_formats = list(FORMATS.keys())
+input_formats = list(INPUT_FORMATS.keys())
+output_formats = list(OUTPUT_FORMATS.keys())
 
 
 def main():
@@ -47,9 +49,14 @@ def main():
         f'more opaque to less opaque in normal usage.'
         f'There are a few special values for this argument: [{charlists}]')
 
+    argparser.add_argument('-f', '--input-format', action='store',
+            type=str, required=False, default=input_formats[0], help='mimetype of file being '
+                'provided as input; must be one of the following: '
+                f'{input_formats}. By default, tries to guess, falling back on {input_formats[0]}.')
+
     argparser.add_argument('-F', '--output-format', action='store',
             type=str, required=False, default=output_formats[0], help='how to '
-                'format output text - must be one of the following:\n'
+                'format output text - must be one of the following: '
                 f'{output_formats}. Default is {output_formats[0]}.')
 
     argparser.add_argument('-a', '--animate', action='store',
@@ -118,6 +125,7 @@ def main():
         height=args.height,
         width=args.width,
         by_intensity=args.char_by_intensity,
+        input_format=args.input_format,
         output_format=args.output_format,
         animate=args.animate)
     interval = args.animate/1000.0

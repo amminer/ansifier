@@ -1,7 +1,10 @@
 """
-for each output format ansifier supports,
-there must be a subclass of ImageParser,
-and the FORMATS map at the bottom of this file must map a format string to it
+For each output format ansifier supports,
+there must be a subclass of OutputFormat,
+and the OUTPUT_FORMATS map at the bottom of this file must map a string to it.
+
+An OutputFormat converts a list of PIL Images
+into a list of strings
 """
 # pyright: strict
 
@@ -10,7 +13,7 @@ from abc import ABC, abstractmethod
 from html import escape
 
 
-class ImageParser(ABC):
+class OutputFormat(ABC):
     @staticmethod
     @abstractmethod
     def char_to_cell(char: str, r: int, g: int, b: int) -> str:
@@ -28,7 +31,7 @@ class ImageParser(ABC):
         pass
 
 
-class AnsiImageParser(ImageParser):
+class AnsiOutput(OutputFormat):
     @staticmethod
     def char_to_cell(char: str, r: int, g: int, b: int) -> str:
         if char == ' ':
@@ -46,7 +49,7 @@ class AnsiImageParser(ImageParser):
         return output + '\033[38;2;255;255;255m'
 
 
-class HtmlImageParser(ImageParser):
+class HtmlOutput(OutputFormat):
     @staticmethod
     def char_to_cell(char: str, r: int, g: int, b: int) -> str:
         char = escape(char)
@@ -65,7 +68,7 @@ class HtmlImageParser(ImageParser):
         return '<div style="font-family: monospace; line-height: 1.2;">' + output + '</div>'
 
 
-FORMATS = {
-    'ansi-escaped': AnsiImageParser,
-    'html/css': HtmlImageParser
+OUTPUT_FORMATS = {
+    'ansi-escaped': AnsiOutput,
+    'html/css': HtmlOutput
 }

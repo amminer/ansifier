@@ -5,44 +5,68 @@ import ansify to consume the package's functionality
 # pyright:basic
 
 
+from cv2 import VideoCapture
+from filetype import guess
 from PIL import Image
 
 from .config import CHARLISTS
-from .ansifiers import FORMATS
+from .input_formats import INPUT_FORMATS
+from .output_formats import OUTPUT_FORMATS
 
 
 def ansify(
-    image_path:     str,
+    input_file:     str,
     chars:          list[str]   = CHARLISTS['default'],
     height:         int         = 20,
     width:          int         = 20,
     by_intensity:   bool        = False,          # default metric is transparency; should use strategy pattern?
+    input_format:   str         = '',
     output_format:  str         = 'ansi-escaped',
     animate:        bool        = True
 ) -> list[str]:
     """
-    :param image_path:      path to image to convert
+    Takes a path to an image or video and converts it into a list of strings,
+    where each string is a representation of one frame of the input media
+    :param input_file:      path to image or video to convert
     :param chars:           comma-separated characters to use when converting image to text
     :params height, width:  the minimum of these values will be used to scale the image down
                             one unit of width equates to two characters because of how text is
                             typically displayed; 1 square cell of output is 2 characters wide
     :param by_intensity:    whether to use intensity (r+g+b) to pick chars; default is transparency
-    :param output_format:   one of ansifiers.FORMATS, depending on target display software
+    :param output_format:   one of ansifiers.OUTPUT_FORMATS, depending on target display software
     :param animate:         whether to read all keyframes into output for animated inputs;
                             if False, only the first frame is converted and returned
     """
-    with Image.open(image_path, 'r') as image:
-        output = []
-        n_frames = getattr(image, 'n_frames', 1)
-        for frame_n in range(n_frames):
-            image.seek(frame_n)
-            output.append(_process_image(image, height, width, output_format, chars, by_intensity))
+    ret = []
+    if input_format == '':
+        input_kind = guess(input_file)
+        if input_kind is None:
+            input_format = "image"
+        else:
+            input_format = input_kind.mime.split('/')[0]
+    input_reader = INPUT_FORMATS.get(input_format)
+    if input_reader is None:
+        raise ValueError(
+            f'{input_format} is not a valid input format; must be one of {list(INPUT_FORMATS.keys())}')
+
+    with input_reader.open(input_file) as rf:
+        if rf is None:
+            raise(ValueError(f'unable to open {input_file}'))
+
+        for image in input_reader.yield_frames(rf):
+            ret.append(_process_frame(
+                image=image,
+                height=height,
+                width=width,
+                output_format=output_format,
+                chars=chars,
+                by_intensity=by_intensity))
             if not animate:
                 break
-    return output
+    return ret
 
 
-def _process_image(
+def _process_frame(
     image:          Image.Image,
     height:         int,
     width:          int,
@@ -50,21 +74,23 @@ def _process_image(
     chars:          list[str],
     by_intensity:   bool
 ) -> str:
-    """ see ansify() """
+    """
+    Takes a PIL Image and converts it into a string
+    """
     image = image.convert('RGBA')
-    image.thumbnail((width, height), Image.BICUBIC)  # pyright:ignore
-    image_processor = FORMATS.get(output_format)
-    if image_processor is None:
+    image.thumbnail((width//2, height), Image.BICUBIC)  # pyright:ignore
+    output_formatter = OUTPUT_FORMATS.get(output_format)
+    if output_formatter is None:
         raise ValueError(
-            f'{output_format} is not a valid format; must be one of {list(FORMATS.keys())}')
+            f'{output_format} is not a valid output format; must be one of {list(OUTPUT_FORMATS.keys())}')
     ret = ''
     for j in range(image.size[1]):
         for i in range(image.size[0]):
             pixel = image.getpixel((i, j))
             char = _char_from_pixel(pixel, chars, by_intensity)  # pyright:ignore
-            ret += image_processor.char_to_cell(char, pixel[0], pixel[1], pixel[2])  # pyright:ignore
-        ret += image_processor.line_break()
-    ret = image_processor.wrap_output(ret)
+            ret += output_formatter.char_to_cell(char, pixel[0], pixel[1], pixel[2])  # pyright:ignore
+        ret += output_formatter.line_break()
+    ret = output_formatter.wrap_output(ret)
 
     return ret
 

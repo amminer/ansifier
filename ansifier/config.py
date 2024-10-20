@@ -14,3 +14,5 @@ CHARLISTS = {
     'blocks': _BLOCK_CHARS,
     'noblocks': _NO_BLOCK_CHARS,
 }
+
+
