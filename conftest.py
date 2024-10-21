@@ -1,3 +1,6 @@
+#pyright:basic
+
+
 import sys
 import os
 import pytest
@@ -17,3 +20,12 @@ def add_repo_root_to_sys_path():
 
     # Optionally, clean up by removing the repo_root from sys.path after tests
     sys.path.remove(REPO_ROOT)
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        '--regenerate-expectations',
+        action='store_true',
+        default='false',
+        help='generate new expected outputs for tests which check output data'
+    )
