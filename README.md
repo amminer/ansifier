@@ -7,6 +7,7 @@
 - [Prerequisites](#prereqs)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Contributing](#contributing)
 - [Acknowledgements](#acknowledgements)
 
 ## 🧐 About <a name = "about"></a>
@@ -111,6 +112,18 @@ options:
 To use `ansifier` programatically, you can `from ansifier import ansify`.
 This function takes most of the same arguments that the CLI takes; check the docstring,
 or just read the code, it's pretty concise.
+
+At the time of writing I also maintain a web frontend for this package's functionality at
+[ansifier.com](https://ansifier.com/), source code [here](https://github.com/amminer/ansifier-web).
+It's in very early development, so few options are available, and the way it's written is a little
+funny to say the least. You can visit this site in a browser to use the graphical frontend
+or send it HTTP POSTs from wherever to use it as an API; see the source README for details.
+
+## 🕹️ Contributing <a name="contributing"></a>
+
+If you'd like to help improve ansifier, please open an issue first. This package has transitioned
+from being a learning project for me to being something I hope will be actually useful to others,
+as it has been useful to me. As such, I'm happy to accept quality contributions.
 
 ## 🙏 Acknowledgements  <a name = "acknowledgements"></a>
 
