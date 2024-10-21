@@ -14,22 +14,25 @@
 `ansifier` is a python package which exposes a simple interface
 for converting image files to utf-8 or ascii encoded strings.
 
-At present, `ansifier` is only able to process image files (as opposed to videos).
+`ansifier` is able to process both image and video files.
 It can format its colorful output using ANSI escapes for terminals
 or HTML/CSS for web applications, so ansifier is kind of a silly name
 as of version 0.0.12, but wasn't it always?
 
 ## 🛠 Prerequisites <a name = "prereqs"></a>
 
-Python 3.8 and higher have been tested, with most extensive testing on python 3.10.
-Older versions of Python 3 *may* work.
+Version 0.0.15 and older were tested and should work with Python 3.8 or newer.
+Version 0.1.0 and newer were tested and should work with Python 3.11 or newer.
+Older Python versions may still work, but no testing has been done,
+and I'm not familiar enough with when exactly language features were introduced
+to have an idea of how much older you can go.
 
-Output *should* work as intended on any modern terminal with
-true color support, and *may* work on terminals without this support,
-albeit with funny looking colors. I've tested on various Linux environments and Windows
-10 21H2 and higher, but not on any Macs. It works in virtual consoles which don't have true
-color support - at some point in the stack the RGB escapes get converted, but I don't know
-where or how.
+For ansi-escaped output, any modern terminal emulator on any modern operating system should work.
+True color support is recommended but may not be necessary.
+For example, in a virtual console with more basic color support, the RGB/true color escapes seem
+to get converted at some point in the stack, although I'm not sure where.
+Colors may come out a little funny. Your terminal emulator also has to be reasonably performant
+to get smooth animations/videos playing.
 
 HTML/CSS output uses the [rgb() CSS function](https://www.w3schools.com/cssref/func_rgb.php),
 so practically any browser being run today should handle it fine.
@@ -37,8 +40,8 @@ so practically any browser being run today should handle it fine.
 Note that `ansifier` does NOT seem to play nice with
 [bpython](https://bpython-interpreter.org/),
 which is a real shame because I love that program.
-Other similar environments which also make use of ANSI escapes may be similarly
-disagreeable to `ansifier`'s emissions. tmux is also a problem at the moment.
+Other similar environments which also make use of ANSI escapes may find
+`ansifier`'s emissions disagreeable. tmux is also a problem at the moment.
 
 ## 📦 Installation <a name = "installation"></a>
 
@@ -113,8 +116,7 @@ or just read the code, it's pretty concise.
 
 Thanks to the maintainers of:
 
-* [Pillow](https://github.com/python-pillow/Pillow) for implementing all those image scaling
-  algorithms
+* [Pillow](https://github.com/python-pillow/Pillow) for dealing with reading and scaling images
 
 * [OpenCV](https://docs.opencv.org/4.5.4/d1/dfb/intro.html) for dealing with reading video files
 
