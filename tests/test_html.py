@@ -11,8 +11,7 @@ with open(expected_output_file, 'r') as rf:
 
 def test_html_output():
     """ 
-    Checks that something was written to stdout
-    DOES NOT check output for correctness otherwise
+    Basic check that ansifier produces expected output for html format
     """
         
     observed_output = ansify(TEST_IMAGE_PATH, output_format='html/css', height=50)[0]

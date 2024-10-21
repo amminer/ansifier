@@ -3,15 +3,15 @@ from difflib import SequenceMatcher
 from ansifier.ansify import ansify
 
 
-TEST_IMAGE_PATH = 'images-examples/catClout.png'
-expected_output_file = 'tests/expected.txt'
+TEST_IMAGE_PATH = 'images-examples/catWizard.mp4'
+expected_output_file = 'tests/expected_mp4.txt'
 with open(expected_output_file, 'r') as rf:
     expected_output = rf.read()
 
 
-def test_html_output():
+def test_video_input():
     """ 
-    Basic check that ansifier produces expected output for ansi format
+    Basic check that ansifier can process video files
     """
         
     observed_output = ansify(TEST_IMAGE_PATH, output_format='ansi-escaped', height=50)[0]

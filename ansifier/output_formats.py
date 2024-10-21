@@ -23,11 +23,18 @@ class OutputFormat(ABC):
     @staticmethod
     @abstractmethod
     def line_break() -> str:
+        """
+        returns whatever string causes a line break to occur in the output format
+        """
         pass
 
     @staticmethod
     @abstractmethod
-    def wrap_output(output:str) -> str:
+    def wrap_output(frame:str) -> str:
+        """
+        Should prepend and append any necessary wrapper text to the output frame.
+        Called on every frame.
+        """
         pass
 
 
@@ -45,8 +52,8 @@ class AnsiOutput(OutputFormat):
         return '\n'
 
     @staticmethod
-    def wrap_output(output:str) -> str:
-        return output + '\033[38;2;255;255;255m'
+    def wrap_output(frame:str) -> str:
+        return frame + '\033[38;2;255;255;255m'
 
 
 class HtmlOutput(OutputFormat):
@@ -64,8 +71,8 @@ class HtmlOutput(OutputFormat):
         return '<br/>'
 
     @staticmethod
-    def wrap_output(output:str) -> str:
-        return '<div style="font-family: monospace; line-height: 1.2;">' + output + '</div>'
+    def wrap_output(frame:str) -> str:
+        return '<div style="font-family: monospace; line-height: 1.2;">' + frame + '</div>'
 
 
 OUTPUT_FORMATS = {

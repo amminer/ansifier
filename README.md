@@ -53,7 +53,6 @@ In your preferred shell, running `ansifier` or `python -m ansifier` exposes a co
 Here it is in action!
 
 
-TODO update this
 https://github.com/user-attachments/assets/801ca3d9-15b5-43a5-b0cf-e53451bca7a3
 
 

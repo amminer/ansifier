@@ -14,12 +14,9 @@ into a list of PIL images
 
 
 from abc import ABC, abstractmethod
-from typing import BinaryIO
-
+from cv2 import VideoCapture, cvtColor, COLOR_BGR2RGB
 from PIL import Image
 from PIL.ImageFile import ImageFile
-
-from cv2 import VideoCapture, cvtColor, COLOR_BGR2RGB
 
 
 class InputFormat(ABC):

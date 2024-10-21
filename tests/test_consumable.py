@@ -4,8 +4,6 @@ bare minimum functional tests, no assertions, just run the code
 """
 
 
-import pytest
-
 from ansifier.ansify import ansify
 
 
@@ -14,7 +12,13 @@ TEST_GIF_PATH = 'images-examples/hmmm.gif'
 
 
 def test_can_consume_package():
-    print(ansify(TEST_IMAGE_PATH))
+    """
+    ensures that import and usage are working in the most basic sense,
+    also checks whether ansifier reads image inputs as expected
+    """
+    output = ansify(TEST_IMAGE_PATH)
+    assert(output)
+    assert(output[0])
 
 
 def test_can_pass_params():
@@ -28,5 +32,5 @@ def test_can_pass_params():
         height=20,
         width=20,
         by_intensity=True,
-        animate=False,
+        animate=True,
         output_format='html/css'))

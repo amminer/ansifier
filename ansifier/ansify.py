@@ -1,6 +1,6 @@
 """
 Main business logic;
-import ansify to consume the package's functionality
+`from ansifier import ansify` to consume the package's functionality.
 """
 # pyright:basic
 
@@ -16,9 +16,9 @@ from .output_formats import OUTPUT_FORMATS
 def ansify(
     input_file:     str,
     chars:          list[str]   = CHARLISTS['default'],
-    height:         int         = 20,
-    width:          int         = 20,
-    by_intensity:   bool        = False,          # default metric is transparency; should use strategy pattern?
+    height:         int         = 0,
+    width:          int         = 0,
+    by_intensity:   bool        = False,          # strategy pattern?
     input_format:   str         = '',
     output_format:  str         = 'ansi-escaped',
     animate:        bool        = True
@@ -26,15 +26,17 @@ def ansify(
     """
     Takes a path to an image or video and converts it into a list of strings,
     where each string is a representation of one frame of the input media
-    :param input_file:      path to image or video to convert
-    :param chars:           comma-separated characters to use when converting image to text
-    :params height, width:  the minimum of these values will be used to scale the image down
-                            one unit of width equates to two characters because of how text is
-                            typically displayed; 1 square cell of output is 2 characters wide
-    :param by_intensity:    whether to use intensity (r+g+b) to pick chars; default is transparency
-    :param output_format:   one of ansifiers.OUTPUT_FORMATS, depending on target display software
-    :param animate:         whether to read all keyframes into output for animated inputs;
-                            if False, only the first frame is converted and returned
+    :param input_file:      Path to image or video to convert
+    :param chars:           Comma-separated characters to use when converting image to text
+    :params height, width:  The minimum of these values will be used to scale the image down.
+                            One unit of width equates to two characters because of how text is
+                            typically displayed; 1 square cell of output is 2 characters wide.
+                            If only one value is provided, the other is also assigned to that value.
+    :param by_intensity:    Whether to use intensity (r+g+b) to pick chars; default is transparency.
+    :param output_format:   One of ansifiers.OUTPUT_FORMATS, depending on target display software.
+    :param animate:         Whether to read all keyframes into output for animated inputs;
+                            If False, only the first frame is converted and returned.
+    :return:                List of frames from input file, singleton when animate == False.
     """
     ret = []
     if input_format == '':
@@ -47,6 +49,13 @@ def ansify(
     if input_reader is None:
         raise ValueError(
             f'{input_format} is not a valid input format; must be one of {list(INPUT_FORMATS.keys())}')
+
+    if height == 0 and width == 0:
+        height, width = 20, 20
+    elif height == 0:
+        height = width
+    elif width == 0:
+        width = height
 
     rf = input_reader.open(input_file)
     if rf is None:
