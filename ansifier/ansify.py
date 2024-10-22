@@ -27,7 +27,7 @@ def ansify(
     Takes a path to an image or video and converts it into a list of strings,
     where each string is a representation of one frame of the input media
     :param input_file:      Path to image or video to convert
-    :param chars:           Comma-separated characters to use when converting image to text
+    :param chars:           characters to use when converting image to text
     :params height, width:  The minimum of these values will be used to scale the image down.
                             One unit of width equates to two characters because of how text is
                             typically displayed; 1 square cell of output is 2 characters wide.
