@@ -14,7 +14,10 @@ def cli_test(request, test_image_path, expected_output_file, **kwargs):
     with open(expected_output_file, 'r') as rf:
         expected_output = rf.read()
 
-    args = ['python', '-m', 'ansifier.cli', test_image_path]
+    if request.config.getoption('--from-installed'):
+        args = ['ansifier', test_image_path]
+    else:
+        args = ['python', '-m', 'ansifier.cli', test_image_path]
     for k, v in kwargs.items():
         args.append(f'--{k.replace("_", "-")}')
         if v is not None:

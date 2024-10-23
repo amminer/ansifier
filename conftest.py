@@ -24,3 +24,9 @@ def pytest_addoption(parser):
         default=False,
         help='generate new expected outputs for tests which check output data'
     )
+    parser.addoption(
+        '--from-installed',
+        action='store_true',
+        default=False,
+        help='whether to test ansifier as an installed package instead of directly from source'
+    )

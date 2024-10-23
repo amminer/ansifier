@@ -5,7 +5,7 @@ main: pip
 	python -m build
 
 clean:
-	rm ./dist/*
+	if ls ./dist/*; then rm ./dist/*; fi
 
 wipe: clean
 	rm -rf ./venv
@@ -17,6 +17,9 @@ install: clean main __pip_install
 
 test:
 	pytest -vrP | tee ./log/most_recent_tests.log
+
+test_installed: install
+	pytest -vrP --from-installed | tee ./log/most_recent_tests.log
 
 example:
 	python -m ansifier.cli ./images-examples/catSwag.png -H 40
