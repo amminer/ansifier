@@ -8,24 +8,19 @@ import pytest
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-
-@pytest.fixture(scope="session", autouse=True)
-def add_repo_root_to_sys_path():
-    """
-    Ensure that the repository root is in PYTHONPATH for the entire test session.
-    """
-    sys.path.insert(0, REPO_ROOT)
-
-    yield
-
-    # Optionally, clean up by removing the repo_root from sys.path after tests
-    sys.path.remove(REPO_ROOT)
+PACKAGE_NAME = 'ansifier'
+FILE_PATH = os.path.realpath('.')
+if os.sep + PACKAGE_NAME + os.sep in FILE_PATH:
+    REPO_ROOT = FILE_PATH[:FILE_PATH.index(os.sep + PACKAGE_NAME + os.sep)+len(PACKAGE_NAME)]
+else:
+    REPO_ROOT = FILE_PATH[:FILE_PATH.index(os.sep + PACKAGE_NAME)+len(PACKAGE_NAME)]
+sys.path.append(REPO_ROOT)
 
 
 def pytest_addoption(parser):
     parser.addoption(
         '--regenerate-expectations',
         action='store_true',
-        default='false',
+        default=False,
         help='generate new expected outputs for tests which check output data'
     )

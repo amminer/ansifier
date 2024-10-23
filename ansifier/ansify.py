@@ -94,12 +94,12 @@ def _process_frame(
         raise ValueError(
             f'{output_format} is not a valid output format; must be one of {list(OUTPUT_FORMATS.keys())}')
     ret = ''
-    for j in range(image.size[1]):
-        for i in range(image.size[0]):
-            pixel = image.getpixel((i, j))
+    for row in range(image.size[1]):
+        for col in range(image.size[0]):
+            pixel = image.getpixel((col, row))
             char = _char_from_pixel(pixel, chars, by_intensity)  # pyright:ignore
             ret += output_formatter.char_to_cell(char, pixel[0], pixel[1], pixel[2])  # pyright:ignore
-        ret += output_formatter.line_break()
+        ret += output_formatter.line_break() if row != image.size[1]-1 else ''
     ret = output_formatter.wrap_output(ret)
 
     return ret

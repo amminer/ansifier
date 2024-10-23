@@ -15,8 +15,8 @@ __pip_install:
 
 install: clean main __pip_install
 
-test: install
-	pytest
+test:
+	pytest -vrP | tee ./log/most_recent_tests.log
 
 example:
 	python -m ansifier.cli ./images-examples/catSwag.png -H 40

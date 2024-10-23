@@ -103,6 +103,7 @@ def main():
 
     terminal_height = get_terminal_size().lines
     terminal_width = get_terminal_size().columns
+
     if args.height == 0:
         args.height = terminal_height - 1
     if args.width == 0:
@@ -133,19 +134,20 @@ def main():
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')  # TODO don't *need* re
 
         for i, frame in enumerate(output):
-            if args.center_horizontally:
+            output_width = len(ansi_escape.sub('', output[i].split('\n')[0]))
+            if args.center_horizontally and output_width + 2 < terminal_width:
                 lines = frame.split('\n')
                 for j, line in enumerate(lines):
                     output_width = len(ansi_escape.sub('', output[i].split('\n')[0]))
-                    while output_width + 4 <= terminal_width:
-                        line = '  ' + line + '  '
-                        lines[j] = line
-                        output_width += 4
-                frame = '\n'.join(lines)
+                    while output_width + 2 < terminal_width:
+                        line = ' ' + line + ' '
+                        lines[j] = line + '\n'
+                        output_width += 2
+                frame = ''.join(lines)
                 output[i] = frame
 
-            if args.center_vertically:
-                output_height = frame.count('\n')
+            output_height = frame.count('\n')
+            if args.center_vertically and output_height + 2 < terminal_height:
                 while output_height + 2 <= terminal_height - 1:
                     frame = '\n' + frame + '\n'
                     output_height += 2
@@ -161,7 +163,6 @@ def main():
             sleep(interval)  # TODO account for print overhead
         if not loop:
             done = True
-    print()
 
 
 if __name__ == '__main__':
