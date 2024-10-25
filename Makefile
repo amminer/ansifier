@@ -20,6 +20,11 @@ test:
 
 test_installed: install
 	pytest -vrP --from-installed | tee ./log/most_recent_tests.log
+	grep -E 'tests/.+::(test_.+) ([A-Z]+D)' ./log/most_recent_tests.log
 
 example:
 	python -m ansifier.cli ./images-examples/catSwag.png -H 40
+
+
+auto:
+	python ./auto_tests.py

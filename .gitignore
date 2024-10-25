@@ -6,3 +6,4 @@ dist
 log/*
 *.egg-info
 .vscode
+auto_tests.py
