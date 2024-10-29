@@ -30,3 +30,7 @@ def pytest_addoption(parser):
         default=False,
         help='whether to test ansifier as an installed package instead of directly from source'
     )
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "requires_opencv: test requires OS-installed opencv")

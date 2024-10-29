@@ -1,17 +1,17 @@
 pip:
-	pip install -r ./requirements.txt && pip install -r ./dev_requirements.txt
+	pip install --root-user-action ignore -q -r ./requirements.txt && pip install --root-user-action ignore -q -r ./dev_requirements.txt
 
 main: pip
-	python -m build
+	python -m build 1>/dev/null
 
 clean:
-	if ls ./dist/*; then rm ./dist/*; fi
+	if ls ./dist/* 2>/dev/null; then rm ./dist/*; fi
 
 wipe: clean
 	rm -rf ./venv
 
 __pip_install:
-	pip install ./dist/ansifier*py3*.whl --force-reinstall
+	pip install --root-user-action ignore -q ./dist/ansifier*py3*.whl --force-reinstall
 
 install: clean main __pip_install
 
@@ -19,12 +19,14 @@ test:
 	pytest -vrP | tee ./log/most_recent_tests.log
 
 test_installed: install
-	pytest -vrP --from-installed | tee ./log/most_recent_tests.log
-	grep -E 'tests/.+::(test_.+) ([A-Z]+D)' ./log/most_recent_tests.log
+	pytest -vrf --from-installed | tee ./log/most_recent_tests.log
+
+test_container:
+	docker build . -t ansifier-local && docker run ansifier-local;
 
 example:
 	python -m ansifier.cli ./images-examples/catSwag.png -H 40
 
 
-auto:
-	python ./auto_tests.py
+publish:
+	python -m twine upload ./dist/ansifier-*.*

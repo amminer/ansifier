@@ -12,7 +12,7 @@ ansifier = "ansifier.cli:main"
 [project]
 name = "ansifier"
 description = "A python package used to represent static & animated images as text"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
   "colorama==0.4.6",
   "Pillow>=9.0.1",
