@@ -22,6 +22,9 @@ as of version 0.0.12, but wasn't it always?
 
 ## 🛠 Prerequisites <a name = "prereqs"></a>
 
+In addition to pip requirements, ansifier depends on opencv to process video inputs.
+If opencv binaries aren't installed, trying to process a video will fail.
+
 Version 0.0.15 and older were tested and should work with Python 3.8 or newer.
 Version 0.1.0 and newer were tested and should work with Python 3.11 or newer.
 Older Python versions may still work, but no testing has been done,

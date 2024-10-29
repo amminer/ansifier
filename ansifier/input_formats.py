@@ -14,7 +14,15 @@ into a list of PIL images
 
 
 from abc import ABC, abstractmethod
-from cv2 import VideoCapture, cvtColor, COLOR_BGR2RGB
+try:
+    from cv2 import VideoCapture, cvtColor, COLOR_BGR2RGB
+except ImportError as e:
+    class VideoCapture():
+        def __init__(self, filepath, msg=e, *args, **kwargs):
+            raise ImportError(
+                    str(msg)
+                    + '\nopencv2 binaries needed to read video inputs, but not found'
+                    + '\ntry installing python3-opencv using your OS package manager')
 from PIL import Image
 from PIL.ImageFile import ImageFile
 

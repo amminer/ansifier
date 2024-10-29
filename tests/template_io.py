@@ -2,15 +2,21 @@
 
 
 from difflib import SequenceMatcher
+from os import path
 
-from ansifier.ansify import ansify
 
-
-def io_test(request, test_image_path, expected_output_file, output_format):
+def io_test(request, test_image_path, expected_output_file, **kwargs):
+    if request.config.getoption('--from-installed'):
+        from ansifier import ansify
+    else:
+        from ansifier.ansify import ansify
+    if not path.exists(expected_output_file):
+        with open(expected_output_file, 'w') as wf:
+            wf.write('')
     with open(expected_output_file, 'r') as rf:
         expected_output = rf.read()
         
-    observed_output = ansify(test_image_path, output_format=output_format, height=50)[0]
+    observed_output = ansify(test_image_path, **kwargs)[0]
 
     if request.config.getoption('--regenerate-expectations'):
         with open(expected_output_file, 'w') as wf:
@@ -20,4 +26,3 @@ def io_test(request, test_image_path, expected_output_file, output_format):
     print(f'expected\n{expected_output}')
     print(f'observed\n{observed_output}')
     assert observed_output == expected_output
-
