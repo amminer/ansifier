@@ -132,27 +132,21 @@ def main():
     if args.output_format == output_formats[0]\
     and args.center_horizontally or args.center_vertically:
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')  # TODO don't *need* re
+        output_width = len(ansi_escape.sub('', output[0].split('\n')[0]))
+        output_height = output[0].count('\n')
+        h_pad = ' ' * ((terminal_width - output_width) // 2)
+        v_pad = '\n' * ((terminal_height - output_height) // 2)
 
         for i, frame in enumerate(output):
-            output_width = len(ansi_escape.sub('', output[i].split('\n')[0]))
             if args.center_horizontally and output_width + 2 < terminal_width:
                 lines = frame.split('\n')
-                for j, line in enumerate(lines):
-                    output_width = len(ansi_escape.sub('', output[i].split('\n')[0]))
-                    while output_width + 2 < terminal_width:
-                        line = ' ' + line + ' '
-                        lines[j] = line + '\n'
-                        output_width += 2
-                frame = ''.join(lines)
+                for j, line in enumerate(lines[:-1]):
+                    lines[j] = h_pad + line + h_pad
+                frame = '\n'.join(lines)
                 output[i] = frame
 
-            output_height = frame.count('\n')
             if args.center_vertically and output_height + 2 < terminal_height:
-                while output_height + 2 <= terminal_height - 1:
-                    frame = '\n' + frame + '\n'
-                    output_height += 2
-                output[i] = frame
-
+                output[i] = v_pad + output[i] + v_pad
 
     interval = args.animate/1000.0
     done = False

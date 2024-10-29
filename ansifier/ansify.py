@@ -115,7 +115,7 @@ def _process_frame(
             pixel = image.getpixel((col, row))
             char = _char_from_pixel(pixel, chars, by_intensity)  # pyright:ignore
             ret += output_formatter.char_to_cell(char, pixel[0], pixel[1], pixel[2])  # pyright:ignore
-        ret += output_formatter.line_break() if row != image.size[1]-1 else ''
+        ret += output_formatter.line_break()
     ret = output_formatter.wrap_output(ret)
 
     return ret
