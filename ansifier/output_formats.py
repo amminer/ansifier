@@ -38,7 +38,7 @@ class OutputFormat(ABC):
         pass
 
 
-class AnsiOutput(OutputFormat):
+class AnsiOutput(OutputFormat):  # TODO support <truecolor terminals
     @staticmethod
     def char_to_cell(char: str, r: int, g: int, b: int) -> str:
         if char == ' ':
@@ -74,6 +74,7 @@ class HtmlOutput(OutputFormat):
     def wrap_output(frame:str) -> str:
         return '<div style="font-family: monospace; line-height: 1.2;">' + frame + '</div>'
 
+# TODO use css to animate html frames?
 
 OUTPUT_FORMATS = {
     'ansi-escaped': AnsiOutput,

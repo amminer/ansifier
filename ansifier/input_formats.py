@@ -55,21 +55,20 @@ class ImageInput(InputFormat):
             yield rf  # pyright:ignore
 
 
-class VideoInput(InputFormat):
+class VideoInput(InputFormat):  # TODO progressbar for big files
     @staticmethod
     def open(filepath: str) -> VideoCapture:
         return VideoCapture(filepath)
 
-
     @staticmethod
     def yield_frames(rf: VideoCapture) -> ImageFile:  # pyright:ignore
+
         success, bgr_frame = rf.read()
         while success:
             rgb_frame = cvtColor(bgr_frame, COLOR_BGR2RGB)
             frame = Image.fromarray(rgb_frame)
             yield frame  # pyright:ignore
             success, bgr_frame = rf.read()
-
 
 
 INPUT_FORMATS = {
