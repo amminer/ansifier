@@ -19,7 +19,7 @@ test:
 	pytest -vrP | tee ./log/most_recent_tests.log
 
 test_installed: install
-	pytest -vrf --from-installed | tee ./log/most_recent_tests.log
+	pytest -vrf --import-mode=append --from-installed | tee ./log/most_recent_tests.log
 
 test_container:
 	docker build . -t ansifier-local && docker run ansifier-local;

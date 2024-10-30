@@ -4,12 +4,10 @@
 from difflib import SequenceMatcher
 from os import path
 
+from ansifier import ansify
+
 
 def io_test(request, test_image_path, expected_output_file, **kwargs):
-    if request.config.getoption('--from-installed'):
-        from ansifier import ansify
-    else:
-        from ansifier.ansify import ansify
     if not path.exists(expected_output_file):
         with open(expected_output_file, 'w') as wf:
             wf.write('')

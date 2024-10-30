@@ -10,4 +10,4 @@ RUN apt -qq update && pip install --root-user-action ignore --upgrade pip 1>/dev
 
 RUN apt-get install -y python3-opencv 1>/dev/null;
 
-RUN pytest -v -m requires_opencv;
+RUN pytest --from-installed --import-mode=append -v -m requires_opencv;
