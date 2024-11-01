@@ -41,6 +41,7 @@ def ansify(
     :return:                List of frames from input file, singleton when animate == False.
     """
     ret = []
+    chars.reverse()  # maintains original interface while allowing for more efficient conversion...
     try:
         if input_format == '':
             input_kind = guess(input_file)
@@ -127,13 +128,12 @@ def _char_from_pixel(
     by_intensity:   bool
 ) -> str:
     """ see ansify() """
-    char = ' '
-    intervals = [255/len(chars)*i for i in range(len(chars)-1, -1, -1)]
-    metric = pixel[3]
     if by_intensity:
         metric = pixel[0] + pixel[1] + pixel[2]
-    for i, interval in enumerate(intervals):
-        if metric >= interval:
-            char = chars[i]
-            break
-    return char
+        bucketsize = (255*3//len(chars))
+        index = min(metric // bucketsize, len(chars)-1)
+    else:
+        metric = pixel[3]
+        bucketsize = (255//len(chars))
+        index = min(metric // bucketsize, len(chars)-1)
+    return chars[index]
