@@ -5,11 +5,9 @@ Main business logic;
 # pyright:basic
 
 
+import numpy as np
 from filetype import guess
 from PIL import Image
-import time
-piltime = 0
-ansitime = 0
 
 from .config import CHARLISTS
 from .input_formats import INPUT_FORMATS
@@ -71,8 +69,6 @@ def ansify(
 
     file_error_message = f'unable to open {input_file}'
     ansifier_error_message = f'unable to process {input_file}'
-    global piltime, ansitime
-    piltime, ansitime = 0, 0
     try:
         rf = input_reader.open(input_file)
     except Exception as e:
@@ -94,8 +90,6 @@ def ansify(
         raise(ValueError(ansifier_error_message + '\n'+str(e)))
     rf_close = getattr(rf, 'close', lambda:None)
     rf_close()
-    print(f"PIL took {piltime} s")
-    print(f"ansifier took {ansitime} s")
 
     return ret
 
@@ -111,15 +105,9 @@ def _process_frame(
     """
     Takes a PIL Image and converts it into a string
     """
-    global piltime, ansitime
-
-    pilstart = time.time()
     image = image.convert('RGBA')
     image.thumbnail((width//2, height), Image.BICUBIC)  # pyright:ignore
-    ptime = time.time() - pilstart
-    piltime += ptime
 
-    ansistart = time.time()
     ret = ''
     retlist = []  # strings are immutable; avoid churning strings
     output_formatter = OUTPUT_FORMATS.get(output_format)
@@ -127,17 +115,23 @@ def _process_frame(
         raise ValueError(
             f'{output_format} is not a valid output format; '
             f'must be one of {list(OUTPUT_FORMATS.keys())}')
-    for row in range(image.size[1]):
-        for col in range(image.size[0]):
-            pixel = image.getpixel((col, row))
+
+    image_array = np.array(image)
+    #print(image_array)
+    #print(image_array.shape)
+    #exit()
+
+    #for row in range(image.size[1]):
+        #for col in range(image.size[0]):
+            #pixel = image.getpixel((col, row))
+    for row in image_array:
+        for pixel in row:  # w/ numpy, faster if chars is a set of ord integers instead of a str?
             char = _char_from_pixel(pixel, chars, by_intensity)  # pyright:ignore
             retlist.append(
                 output_formatter.char_to_cell(char, pixel[0], pixel[1], pixel[2]))  # pyright:ignore
         retlist.append(output_formatter.line_break())
     output_formatter.wrap_output(retlist)
     ret = ''.join(retlist)
-    atime = time.time() - ansistart
-    ansitime += atime
 
     return ret
 
@@ -151,9 +145,8 @@ def _char_from_pixel(
     if by_intensity:
         metric = pixel[0] + pixel[1] + pixel[2]
         bucketsize = (255*3//len(chars))
-        index = min(metric // bucketsize, len(chars)-1)
     else:
         metric = pixel[3]
         bucketsize = (255//len(chars))
-        index = min(metric // bucketsize, len(chars)-1)
+    index = min(metric // bucketsize, len(chars)-1)
     return chars[index]
