@@ -7,7 +7,11 @@ from os import path
 from ansifier import ansify
 
 
-def io_test(request, test_image_path, expected_output_file, **kwargs):
+def io_test(request,
+            test_image_path,
+            expected_output_file,
+            observed_output_file,
+            **kwargs):
     if not path.exists(expected_output_file):
         with open(expected_output_file, 'w') as wf:
             wf.write('')
@@ -15,6 +19,9 @@ def io_test(request, test_image_path, expected_output_file, **kwargs):
         expected_output = rf.read()
         
     observed_output = ansify(test_image_path, **kwargs)[0]
+    if observed_output_file:
+        with open(observed_output_file, 'w') as wf:
+            wf.write(observed_output)
 
     if request.config.getoption('--regenerate-expectations'):
         with open(expected_output_file, 'w') as wf:
