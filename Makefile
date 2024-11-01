@@ -1,7 +1,4 @@
-pip:
-	pip install --root-user-action ignore -q -r ./requirements.txt && pip install --root-user-action ignore -q -r ./dev_requirements.txt
-
-main: pip
+main:
 	python -m build 1>/dev/null
 
 clean:
@@ -27,6 +24,7 @@ test_container:
 example:
 	python -m ansifier.cli ./images-examples/catSwag.png -H 40
 
+#########################################################################################
 
-publish:
+release:
 	python -m twine upload ./dist/ansifier-*.*
