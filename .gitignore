@@ -6,3 +6,5 @@ dist
 log/*
 *.egg-info
 .vscode
+perf
+prev_perf
