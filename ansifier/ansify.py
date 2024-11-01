@@ -133,7 +133,7 @@ def _process_frame(
             # without losing the ability to optimize the output size (see conditional in
             # AnsiOutput.char_to_cell), it would be highly preferable, but I don't think there is.
             if by_intensity:
-                pixel_value = pixel[0] + pixel[1] + pixel[2]
+                pixel_value = np.sum(pixel[:3], dtype=np.uint16)
             else:
                 pixel_value = pixel[3]
             char = charmap[pixel_value]
