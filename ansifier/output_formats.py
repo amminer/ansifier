@@ -38,14 +38,18 @@ class OutputFormat(ABC):
         pass
 
 
+# defining these as separate functions facilitates performance profiling
+def retspace(): return '  '
+def retescapedstring(r,g,b,char): return f'\033[38;2;{r};{g};{b}m{char*2}'
 class AnsiOutput(OutputFormat):  # TODO support <truecolor terminals
     @staticmethod
     def char_to_cell(char: str, r: int, g: int, b: int) -> str:
         if char == ' ':
-            ret = '  '
+            return char
+            #return retspace()
         else:
-            ret = f'\033[38;2;{r};{g};{b}m{char*2}'
-        return ret
+            return f'\033[38;2;{r};{g};{b}m{char*2}'
+            #return retescapedstring(r,g,b,char)
 
     @staticmethod
     def line_break() -> str:
