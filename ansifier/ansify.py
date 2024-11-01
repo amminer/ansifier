@@ -75,29 +75,31 @@ def ansify(
         raise(ValueError(file_error_message + '\n'+str(e)))
     if rf is None:
         raise(ValueError(file_error_message))
-    try:
-        for image in input_reader.yield_frames(rf):
-            ret.append(_process_frame(
-                image=image,
-                height=height,
-                width=width,
-                output_format=output_format,
-                chars=chars,
-                by_intensity=by_intensity))
-            if not animate:
-                break
-    except Exception as e:
-        raise(ValueError(ansifier_error_message + '\n'+str(e)))
+    for image in input_reader.yield_frames(rf):
+        image = _convert_frame(image, width, height)
+        ret.append(_process_frame(
+            image=image,
+            output_format=output_format,
+            chars=chars,
+            by_intensity=by_intensity))
+        if not animate:
+            break
+    print(f'output dims: {image.size}')
+    print(f'output chars: {sum((len(frame) for frame in ret))}')
     rf_close = getattr(rf, 'close', lambda:None)
     rf_close()
 
     return ret
 
 
+def _convert_frame(image, width, height):
+    image = image.convert('RGBA')
+    image.thumbnail((width//2, height), Image.BICUBIC)  # pyright:ignore
+    return image
+
+
 def _process_frame(
     image:          Image.Image,
-    height:         int,
-    width:          int,
     output_format:  str,
     chars:          list[str],
     by_intensity:   bool
@@ -105,9 +107,6 @@ def _process_frame(
     """
     Takes a PIL Image and converts it into a string
     """
-    image = image.convert('RGBA')
-    image.thumbnail((width//2, height), Image.BICUBIC)  # pyright:ignore
-
     ret = ''
     retlist = []  # strings are immutable; avoid churning strings
     output_formatter = OUTPUT_FORMATS.get(output_format)
@@ -116,17 +115,19 @@ def _process_frame(
             f'{output_format} is not a valid output format; '
             f'must be one of {list(OUTPUT_FORMATS.keys())}')
 
+    if by_intensity:
+        ceiling = 255*3
+    else:
+        ceiling = 255
+    charmap = {i: chars[min(i // (ceiling//len(chars)), len(chars)-1)] for i in range(ceiling+1)}
     image_array = np.array(image)
-    #print(image_array)
-    #print(image_array.shape)
-    #exit()
-
-    #for row in range(image.size[1]):
-        #for col in range(image.size[0]):
-            #pixel = image.getpixel((col, row))
     for row in image_array:
-        for pixel in row:  # w/ numpy, faster if chars is a set of ord integers instead of a str?
-            char = _char_from_pixel(pixel, chars, by_intensity)  # pyright:ignore
+        for pixel in row:  # faster if chars is set of ord ints instead of a str?
+            if by_intensity:
+                metric = pixel[0] + pixel[1] + pixel[2]
+            else:
+                metric = pixel[3]
+            char = _char_from_pixel(metric, charmap)
             retlist.append(
                 output_formatter.char_to_cell(char, pixel[0], pixel[1], pixel[2]))  # pyright:ignore
         retlist.append(output_formatter.line_break())
@@ -137,16 +138,8 @@ def _process_frame(
 
 
 def _char_from_pixel(
-    pixel:          tuple[int, int, int, int],
-    chars:          list[str],
-    by_intensity:   bool
+    metric:         int,
+    charmap:        dict[int, str]
 ) -> str:
     """ see ansify() """
-    if by_intensity:
-        metric = pixel[0] + pixel[1] + pixel[2]
-        bucketsize = (255*3//len(chars))
-    else:
-        metric = pixel[3]
-        bucketsize = (255//len(chars))
-    index = min(metric // bucketsize, len(chars)-1)
-    return chars[index]
+    return charmap[metric]
