@@ -16,13 +16,13 @@ from .output_formats import OUTPUT_FORMATS
 
 def ansify(
     input_file:     str,
-    chars:          list[str]   = CHARLISTS['default'],
-    height:         int         = 0,
-    width:          int         = 0,
-    by_intensity:   bool        = False,          # strategy pattern?
-    input_format:   str         = '',
-    output_format:  str         = 'ansi-escaped',
-    animate:        bool        = True
+    chars:          list[str]|None  = None,
+    height:         int             = 0,
+    width:          int             = 0,
+    by_intensity:   bool            = False,          # strategy pattern?
+    input_format:   str             = '',
+    output_format:  str             = 'ansi-escaped',
+    animate:        bool            = True
 ) -> list[str]:
     """
     Takes a path to an image or video and converts it into a list of strings,
@@ -42,6 +42,8 @@ def ansify(
     :return:                List of frames from input file, singleton when animate == False.
     """
     ret = []
+    if chars is None:
+        chars = CHARLISTS['default'].copy()
     chars.reverse()  # maintains original interface while allowing for more efficient conversion...
     try:
         if input_format == '':
@@ -56,7 +58,8 @@ def ansify(
                          + '\n'+str(e))
     if input_reader is None:
         raise ValueError(
-            f'{input_format} is not a valid input format; must be one of {list(INPUT_FORMATS.keys())}')
+            f'{input_format} is not a valid input format; must be one of '
+            f'{list(INPUT_FORMATS.keys())}')
 
     if height == 0 and width == 0:
         height, width = 20, 20
@@ -84,8 +87,8 @@ def ansify(
             by_intensity=by_intensity))
         if not animate:
             break
-    print(f'output dims: {image.size}')
-    print(f'output chars: {sum((len(frame) for frame in ret))}')
+    #print(f'output dims: {image.size}')
+    #print(f'output chars: {sum((len(frame) for frame in ret))}')
     rf_close = getattr(rf, 'close', lambda:None)
     rf_close()
 
@@ -107,7 +110,6 @@ def _process_frame(
     """
     Takes a PIL Image and converts it into a string
     """
-    ret = ''
     retlist = []  # strings are immutable; avoid churning strings
     output_formatter = OUTPUT_FORMATS.get(output_format)
     if output_formatter is None:
@@ -122,24 +124,22 @@ def _process_frame(
     charmap = {i: chars[min(i // (ceiling//len(chars)), len(chars)-1)] for i in range(ceiling+1)}
     image_array = np.array(image)
     for row in image_array:
-        for pixel in row:  # faster if chars is set of ord ints instead of a str?
-            if by_intensity:
-                metric = pixel[0] + pixel[1] + pixel[2]
-            else:
-                metric = pixel[3]
-            char = _char_from_pixel(metric, charmap)
+        for pixel in row:
+            char = _char_from_pixel(pixel, charmap, by_intensity)
             retlist.append(
                 output_formatter.char_to_cell(char, pixel[0], pixel[1], pixel[2]))  # pyright:ignore
         retlist.append(output_formatter.line_break())
     output_formatter.wrap_output(retlist)
-    ret = ''.join(retlist)
-
-    return ret
+    return ''.join(retlist)
 
 
 def _char_from_pixel(
-    metric:         int,
-    charmap:        dict[int, str]
+    pixel:          tuple[int, int, int, int],
+    charmap:        dict[int, str],
+    by_intensity:   bool
 ) -> str:
-    """ see ansify() """
+    if by_intensity:
+        metric = pixel[0] + pixel[1] + pixel[2]
+    else:
+        metric = pixel[3]
     return charmap[metric]
