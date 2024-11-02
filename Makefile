@@ -15,7 +15,7 @@ install: clean main __pip_install
 test:
 	pytest -vrP | tee ./log/most_recent_tests.log
 
-test_installed: install
+test_installed:
 	pytest -vrf --import-mode=append --from-installed | tee ./log/most_recent_tests.log
 
 test_container:
