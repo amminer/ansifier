@@ -32,20 +32,13 @@ and I'm not familiar enough with when exactly language features were introduced
 to have an idea of how much older you can go.
 
 For ansi-escaped output, any modern terminal emulator on any modern operating system should work.
-True color support is recommended but may not be necessary.
-For example, in a virtual console with more basic color support, the RGB/true color escapes seem
-to get converted at some point in the stack, although I'm not sure where.
-Colors may come out a little funny. Your terminal emulator also has to be reasonably performant
-to get smooth animations/videos playing.
+True color support is currently required for accurate color reproduction, but support for lower
+color spaces is on the to-do list.
+Even in a true color terminal, some environments such as `tmux` and `bpython` may require additional
+configuration to play nice with true color escapes.
 
 HTML/CSS output uses the [rgb() CSS function](https://www.w3schools.com/cssref/func_rgb.php),
 so practically any browser being run today should handle it fine.
-
-Note that `ansifier` does NOT seem to play nice with
-[bpython](https://bpython-interpreter.org/),
-which is a real shame because I love that program.
-Other similar environments which also make use of ANSI escapes may find
-`ansifier`'s emissions disagreeable. tmux is also a problem at the moment.
 
 ## 📦 Installation <a name = "installation"></a>
 

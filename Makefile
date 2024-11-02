@@ -1,7 +1,4 @@
-pip:
-	pip install --root-user-action ignore -q -r ./requirements.txt && pip install --root-user-action ignore -q -r ./dev_requirements.txt
-
-main: pip
+main:
 	python -m build 1>/dev/null
 
 clean:
@@ -18,8 +15,8 @@ install: clean main __pip_install
 test:
 	pytest -vrP | tee ./log/most_recent_tests.log
 
-test_installed: install
-	pytest -vrf --from-installed | tee ./log/most_recent_tests.log
+test_installed:
+	pytest -vrf --import-mode=append --from-installed | tee ./log/most_recent_tests.log
 
 test_container:
 	docker build . -t ansifier-local && docker run ansifier-local;
@@ -27,6 +24,7 @@ test_container:
 example:
 	python -m ansifier.cli ./images-examples/catSwag.png -H 40
 
+#########################################################################################
 
-publish:
+release:
 	python -m twine upload ./dist/ansifier-*.*

@@ -30,7 +30,7 @@ class OutputFormat(ABC):
 
     @staticmethod
     @abstractmethod
-    def wrap_output(frame:str) -> str:
+    def wrap_output(frame:list[str]) -> None:
         """
         Should prepend and append any necessary wrapper text to the output frame.
         Called on every frame.
@@ -38,22 +38,21 @@ class OutputFormat(ABC):
         pass
 
 
-class AnsiOutput(OutputFormat):
+class AnsiOutput(OutputFormat):  # TODO support <truecolor terminals
     @staticmethod
     def char_to_cell(char: str, r: int, g: int, b: int) -> str:
         if char == ' ':
-            ret = '  '
+            return '  '
         else:
-            ret = f'\033[38;2;{r};{g};{b}m{char*2}'
-        return ret
+            return f'\033[38;2;{r};{g};{b}m{char*2}'
 
     @staticmethod
     def line_break() -> str:
         return '\n'
 
     @staticmethod
-    def wrap_output(frame:str) -> str:
-        return frame + '\033[38;2;255;255;255m'
+    def wrap_output(frame:list[str]) -> None:
+        frame.append('\033[38;2;255;255;255m')
 
 
 class HtmlOutput(OutputFormat):
@@ -71,9 +70,11 @@ class HtmlOutput(OutputFormat):
         return '<br/>'
 
     @staticmethod
-    def wrap_output(frame:str) -> str:
-        return '<div style="font-family: monospace; line-height: 1.2;">' + frame + '</div>'
+    def wrap_output(frame:list[str]) -> None:
+        frame.insert(0, '<div style="font-family: monospace; line-height: 1.2;">')
+        frame.append('</div>')
 
+# TODO use css to animate html frames?
 
 OUTPUT_FORMATS = {
     'ansi-escaped': AnsiOutput,

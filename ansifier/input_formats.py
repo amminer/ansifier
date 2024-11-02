@@ -15,7 +15,7 @@ into a list of PIL images
 
 from abc import ABC, abstractmethod
 try:
-    from cv2 import VideoCapture, cvtColor, COLOR_BGR2RGB
+    from cv2 import VideoCapture, cvtColor, COLOR_BGR2RGB  # pyright: ignore
 except ImportError as e:
     class VideoCapture():
         def __init__(self, filepath, msg=e, *args, **kwargs):
@@ -55,21 +55,19 @@ class ImageInput(InputFormat):
             yield rf  # pyright:ignore
 
 
-class VideoInput(InputFormat):
+class VideoInput(InputFormat):  # TODO progressbar for big files
     @staticmethod
     def open(filepath: str) -> VideoCapture:
         return VideoCapture(filepath)
 
-
     @staticmethod
     def yield_frames(rf: VideoCapture) -> ImageFile:  # pyright:ignore
-        success, bgr_frame = rf.read()
+        success, bgr_frame = rf.read()  # pyright: ignore
         while success:
             rgb_frame = cvtColor(bgr_frame, COLOR_BGR2RGB)
             frame = Image.fromarray(rgb_frame)
             yield frame  # pyright:ignore
-            success, bgr_frame = rf.read()
-
+            success, bgr_frame = rf.read()  # pyright: ignore
 
 
 INPUT_FORMATS = {

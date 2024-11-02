@@ -6,8 +6,8 @@ WORKDIR /ansifier
 
 COPY . .
 
-RUN apt -qq update && pip install --root-user-action ignore --upgrade pip 1>/dev/null && make test_installed;
+RUN apt -qq update && pip install --root-user-action ignore --upgrade pip 1>/dev/null && pip install --root-user-action ignore -r requirements.txt -r dev_requirements.txt && make install && make test_installed;
 
 RUN apt-get install -y python3-opencv 1>/dev/null;
 
-RUN pytest -v -m requires_opencv;
+RUN pytest --from-installed --import-mode=append -v -m requires_opencv;
