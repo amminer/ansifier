@@ -20,6 +20,7 @@ def ansify(
     height:         int             = 0,
     width:          int             = 0,
     by_intensity:   bool            = False,
+    invert:         bool            = False,
     input_format:   str             = '',
     output_format:  str             = 'ansi-escaped',
     animate:        bool            = True
@@ -44,7 +45,8 @@ def ansify(
     ret = []
     if chars is None:
         chars = CHARLISTS['default'].copy()
-    chars.reverse()  # maintains original interface while allowing for more efficient conversion...
+    if not invert:
+        chars.reverse()  # maintains original interface while allowing for more efficient conversion
 
     # determine how to read the input
     try:

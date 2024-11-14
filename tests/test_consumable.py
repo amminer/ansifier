@@ -33,5 +33,6 @@ def test_can_pass_params(request):
         height=20,
         width=20,
         by_intensity=True,
+        invert=True,
         animate=True,
         output_format='html/css'))
