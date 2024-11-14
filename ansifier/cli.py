@@ -40,13 +40,13 @@ def main():
 
     argparser.add_argument('-W', '--width', action='store', type=int,
         required=False, default=0,
-        help='Restrict output to twice this many columns (it takes ~2 chars to represent a square). '
-             'By default, restricts output to the width of the calling shell\'s terminal.')
+        help='Restrict output to twice this many columns (it takes ~2 chars to represent a square).'
+             ' By default, restricts output to the width of the calling shell\'s terminal.')
 
-    charlists = ''.join(f'"{k}": "{",".join(v)}" ' for k,v in CHARLISTS.items())
+    charlists = ''.join(f'"{k}": "{"".join(v)}" ' for k,v in CHARLISTS.items())
     argparser.add_argument('-c', '--chars', action='store', type=str,
-        required=False, default=",".join(CHARLISTS["default"]), help='comma-separated sequence of characters '
-        'to be chosen from when converting regions of the image to text. Should be sorted from '
+        required=False, default=''.join(CHARLISTS['default']), help='characters to be chosen from'
+        f'when converting regions of the image to text. Should be sorted from '
         f'more opaque to less opaque in normal usage.'
         f'There are a few special values for this argument: [{charlists}]')
 
@@ -112,10 +112,7 @@ def main():
     if args.chars in CHARLISTS.keys():
         args.chars = CHARLISTS[args.chars]
     else:
-        args.chars=list(args.chars.split(','))
-
-    if args.invert_char_selection:
-        args.chars = args.chars[-1::-1]
+        args.chars = [char for char in args.chars]
 
 
     just_fix_windows_console()
@@ -125,6 +122,7 @@ def main():
         height=args.height,
         width=args.width,
         by_intensity=args.char_by_intensity,
+        invert=args.invert_char_selection,
         input_format=args.input_format,
         output_format=args.output_format,
         animate=args.animate)
