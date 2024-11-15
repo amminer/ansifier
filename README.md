@@ -12,30 +12,32 @@
 
 ## 🧐 About <a name = "about"></a>
 
-`ansifier` is a python package which exposes a simple interface
-for converting image files to utf-8 or ascii encoded strings.
+`ansifier` is a python package which exposes a simple CLI and API
+for converting image and video files into strings for display in text-mode interfaces.
 
-`ansifier` is able to process both image and video files.
-It can format its colorful output using ANSI escapes for terminals
-or HTML/CSS for web applications, so ansifier is kind of a silly name
+It can output 4-bit, 8-bit, or 24-bit color ANSI escapes for terminals
+or HTML/CSS for web browsers, so ansifier is kind of a silly name
 as of version 0.0.12, but wasn't it always?
+
+Please note that the package is in early development (0.y.z). As per semver.org:
+
+* Major version zero (0.y.z) is for initial development. Anything MAY change at any time. The public API SHOULD NOT be considered stable.
+
+* Version 1.0.0 defines the public API. The way in which the version number is incremented after this release is dependent on this public API and how it changes.
+
 
 ## 🛠 Prerequisites <a name = "prereqs"></a>
 
-In addition to pip requirements, ansifier depends on opencv to process video inputs.
+In addition to dependencies in requirements.txt, ansifier depends on opencv to process video inputs.
 If opencv binaries aren't installed, trying to process a video will fail.
 
-Version 0.0.15 and older were tested and should work with Python 3.8 or newer.
-Version 0.1.0 and newer were tested and should work with Python 3.11 or newer.
-Older Python versions may still work, but no testing has been done,
-and I'm not familiar enough with when exactly language features were introduced
-to have an idea of how much older you can go.
+Versions <= 0.0.15 require python >= 3.8.
+Versions >= 0.1.0 require python >= 3.10 (despite some errant metadata prior to 0.1.4).
 
-For ansi-escaped output, any modern terminal emulator on any modern operating system should work.
-True color support is currently required for accurate color reproduction, but support for lower
-color spaces is on the to-do list.
-Even in a true color terminal, some environments such as `tmux` and `bpython` may require additional
-configuration to play nice with true color escapes.
+Of course, for ansi escapes to render correctly, the terminal running `ansifier` must support those
+escapes, whether they're 4-bit/16-color, 8-bit/256-color, or 24-bit/truecolor. 
+Even in a truecolor terminal, some environments such as `tmux` and `bpython` may require additional
+configuration to play nice with truecolor escapes.
 
 HTML/CSS output uses the [rgb() CSS function](https://www.w3schools.com/cssref/func_rgb.php),
 so practically any browser being run today should handle it fine.
@@ -117,9 +119,7 @@ or send it HTTP POSTs from wherever to use it as an API; see the source README f
 
 ## 🕹️ Contributing <a name="contributing"></a>
 
-If you'd like to help improve ansifier, please open an issue first. This package has transitioned
-from being a learning project for me to being something I hope will be actually useful to others,
-as it has been useful to me. As such, I'm happy to accept quality contributions.
+If there's a feature you'd like to see added or a bug you'd like to see fixed, please open an issue.
 
 ## 🙏 Acknowledgements  <a name = "acknowledgements"></a>
 

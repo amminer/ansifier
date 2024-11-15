@@ -22,7 +22,7 @@ def ansify(
     by_intensity:   bool            = False,
     invert:         bool            = False,
     input_format:   str             = '',
-    output_format:  str             = 'ansi-escaped',
+    output_format:  str             = 'ansi-truecolor',
     animate:        bool            = True
 ) -> list[str]:
     """

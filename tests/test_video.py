@@ -23,7 +23,7 @@ def test_video_input(request):
             test_image_path=test_image_path,
             expected_output_file=expected_output_file,
             observed_output_file=observed_output_file,
-            output_format='ansi-escaped', height=50)
+            output_format='ansi-truecolor', height=50)
 
 
 def test_video_input_with_no_sys_opencv(request):
@@ -39,4 +39,4 @@ def test_video_input_with_no_sys_opencv(request):
                     test_image_path=test_image_path,
                     expected_output_file=expected_output_file,
                     observed_output_file='',
-                    output_format='ansi-escaped', height=50)
+                    output_format='ansi-truecolor', height=50)
